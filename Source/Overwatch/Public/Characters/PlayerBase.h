@@ -11,6 +11,7 @@ class OVERWATCH_API APlayerBase : public ACharacterBase
 {
 	GENERATED_BODY()
 
+protected:
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
@@ -19,10 +20,12 @@ class OVERWATCH_API APlayerBase : public ACharacterBase
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* FollowCamera;
 
+private:
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 		class UInputMappingContext* DefaultMappingContext;
 
+	/** InputActions */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 		class UInputAction* MoveForwardAction;
 
@@ -41,7 +44,31 @@ class OVERWATCH_API APlayerBase : public ACharacterBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 		class UInputAction* JumpAction;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* AbilityOneAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* AbilityTwoAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* AbilityThreeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* InteractionAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* PrimaryFireAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* SecondaryFireAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* ReloadAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+		class UInputAction* QuickMeleeAction;
+
+
 public:
 	APlayerBase();
 
@@ -53,6 +80,9 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	/**
+	* 움직임 제어 관련 함수
+	*/
 protected:
 	void MoveForward(const FInputActionValue& Value);
 
@@ -63,5 +93,36 @@ protected:
 	virtual void Jump() override;
 
 	virtual void StopJumping() override;
+
+	virtual void StopMovement();
+
+
+	/**
+	* InputAction에 바인드 된 함수들 Child Class에서 override 하여 사용할 것
+	*/
+protected:
+	/** 상호작용 */
+	void Interaction();
+
+	/** 기술1 */
+	virtual void AbilityOne();
+
+	/** 기술2 */
+	virtual void AbilityTwo();
+
+	/** 기술3 */
+	virtual void AbilityThree();
+
+	/** 주 무기 (좌 클릭) */
+	virtual void PrimaryFire();
+
+	/** 보조 무기 (우 클릭) */
+	virtual void SecondaryFire();
+
+	/** 재장전 */
+	virtual void Reload();
+
+	/** 근접 공격 */
+	virtual void QuickMelee();
 
 };

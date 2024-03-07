@@ -8,6 +8,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "Utilities.h"
+
 APlayerBase::APlayerBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -37,7 +39,7 @@ APlayerBase::APlayerBase()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
+	CameraBoom->SocketOffset = FVector(0.f, 100.f, 50.f);
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
@@ -72,7 +74,25 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerBase::Look);
 
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerBase::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerBase::Jump);
+
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &APlayerBase::StopJumping);
+
+		EnhancedInputComponent->BindAction(AbilityOneAction, ETriggerEvent::Started, this, &APlayerBase::AbilityOne);
+
+		EnhancedInputComponent->BindAction(AbilityTwoAction, ETriggerEvent::Started, this, &APlayerBase::AbilityTwo);
+
+		EnhancedInputComponent->BindAction(AbilityThreeAction, ETriggerEvent::Started, this, &APlayerBase::AbilityThree);
+
+		EnhancedInputComponent->BindAction(InteractionAction, ETriggerEvent::Started, this, &APlayerBase::Interaction);
+
+		EnhancedInputComponent->BindAction(PrimaryFireAction, ETriggerEvent::Triggered, this, &APlayerBase::PrimaryFire);
+
+		EnhancedInputComponent->BindAction(SecondaryFireAction, ETriggerEvent::Triggered, this, &APlayerBase::SecondaryFire);
+
+		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &APlayerBase::Reload);
+
+		EnhancedInputComponent->BindAction(QuickMeleeAction, ETriggerEvent::Started, this, &APlayerBase::QuickMelee);
 	}
 }
 
@@ -124,4 +144,53 @@ void APlayerBase::Jump()
 void APlayerBase::StopJumping()
 {
 	Super::StopJumping();
+}
+
+void APlayerBase::Interaction()
+{
+	CLog::Print(TEXT("Interaction Pressed"));
+	FVector socketOffset = CameraBoom->SocketOffset;
+	socketOffset = FVector(socketOffset.X, socketOffset.Y * -1, socketOffset.Z);
+	CameraBoom->SocketOffset = socketOffset;
+}
+
+void APlayerBase::AbilityOne()
+{
+	CLog::Print(TEXT("Ability1 Pressed"));	
+}
+
+void APlayerBase::AbilityTwo()
+{
+	CLog::Print(TEXT("Ability2 Pressed"));
+}
+
+void APlayerBase::AbilityThree()
+{
+	CLog::Print(TEXT("Ability3 Pressed"));
+}
+
+void APlayerBase::PrimaryFire()
+{
+	CLog::Print(TEXT("PrimaryFire Triggered"));
+}
+
+void APlayerBase::SecondaryFire()
+{
+	CLog::Print(TEXT("SecondaryFire Triggered"));
+}
+
+void APlayerBase::Reload()
+{
+	CLog::Print(TEXT("Reload Pressed"));
+}
+
+void APlayerBase::QuickMelee()
+{
+	CLog::Print(TEXT("QuickMelee Pressed"));
+}
+
+void APlayerBase::StopMovement()
+{
+	CLog::Print(TEXT("Stop Movement"), -1,  2.f, FColor::Red);
+	GetCharacterMovement()->StopMovementImmediately();
 }
