@@ -73,3 +73,11 @@ void CLog::Log(const FString& InFuncName, int32 InLineNumber)
 
 	UE_LOG(GameProject, Display, L"%s", *str);
 }
+//
+//
+//template<typename EnumClass>
+//inline void CLog::PrintEnum(EnumClass InEnum, int32 InKey, float Duration, FColor InColor)
+//{
+//	FString str = StaticEnum<EnumClass>()->GetValueAsString(InEnum);
+//	GEngine->AddOnScreenDebugMessage(InKey, Duration, InColor, str);
+//}

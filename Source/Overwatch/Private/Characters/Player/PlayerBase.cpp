@@ -1,4 +1,4 @@
-#include "Characters/PlayerBase.h"
+#include "Characters/Player/PlayerBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -8,6 +8,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "Kismet/GameplayStatics.h"
+
+#include "ActorComponents/Ability/AbilityManagementComponent.h"
+#include "ActorComponents/Ability/AmmoComponent.h"
 #include "Utilities.h"
 
 APlayerBase::APlayerBase()
@@ -28,11 +32,13 @@ APlayerBase::APlayerBase()
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
+	GetCharacterMovement()->JumpZVelocity = 300.f;
+	GetCharacterMovement()->GravityScale = 0.75f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->MaxAcceleration = 2048.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -40,11 +46,17 @@ APlayerBase::APlayerBase()
 	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->SocketOffset = FVector(0.f, 100.f, 50.f);
+
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	GetCapsuleComponent()->SetCollisionProfileName(FName(TEXT("Team1Capsule")));
+	GetMesh()->SetCollisionProfileName(FName(TEXT("Team1Mesh")));
+
+	AbilityManagementComponent = CreateDefaultSubobject<UAbilityManagementComponent>(TEXT("AbilityManagementComponent"));
+	AmmoComponent = CreateDefaultSubobject<UAmmoComponent>(TEXT("AmmoComponent"));
 }
 
 void APlayerBase::BeginPlay()
@@ -58,6 +70,8 @@ void APlayerBase::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	MovementModeChangedDelegate.AddDynamic(this, &APlayerBase::MovementModeChanged);
 }
 
 void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -90,7 +104,7 @@ void APlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 		EnhancedInputComponent->BindAction(SecondaryFireAction, ETriggerEvent::Triggered, this, &APlayerBase::SecondaryFire);
 
-		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &APlayerBase::Reload);
+		EnhancedInputComponent->BindAction(ReloadingAction, ETriggerEvent::Started, this, &APlayerBase::Reloading);
 
 		EnhancedInputComponent->BindAction(QuickMeleeAction, ETriggerEvent::Started, this, &APlayerBase::QuickMelee);
 	}
@@ -103,36 +117,40 @@ void APlayerBase::Tick(float DeltaTime)
 
 void APlayerBase::MoveForward(const FInputActionValue& Value)
 {
-	float inputValue = Value.Get<float>();
+	float InputValue = Value.Get<float>();
 
-	const FRotator controlRotation = GetControlRotation();
-	const FRotator yawRotation = FRotator(0.f, controlRotation.Yaw, 0.f);
+	const FRotator ControlRotation = GetControlRotation();
+	const FRotator YawRotation = FRotator(0.f, ControlRotation.Yaw, 0.f);
 
-	const FVector forwardVector = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::X);
+	const FVector ForwardVector = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-	AddMovementInput(forwardVector, inputValue);
+	AddMovementInput(ForwardVector, InputValue);
 }
 
 void APlayerBase::MoveRight(const FInputActionValue& Value)
 {
-	float inputValue = Value.Get<float>();
+	float InputValue = Value.Get<float>();
 
-	const FRotator controlRotation = GetControlRotation();
-	const FRotator yawRotation = FRotator(0.f, controlRotation.Yaw, 0.f);
+	const FRotator ControlRotation = GetControlRotation();
+	const FRotator YawRotation = FRotator(0.f, ControlRotation.Yaw, 0.f);
 
-	const FVector rightVector = FRotationMatrix(yawRotation).GetUnitAxis(EAxis::Y);
+	const FVector RightVector = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	AddMovementInput(rightVector, inputValue);
+	AddMovementInput(RightVector, InputValue);
 }
 
 void APlayerBase::Look(const FInputActionValue& Value)
 {
-	FVector2D lookAxisVector = Value.Get<FVector2D>();
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (Controller)
 	{
-		AddControllerYawInput(lookAxisVector.X);
-		AddControllerPitchInput(lookAxisVector.Y);
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
+	else
+	{
+		CLog::Log(TEXT("PlayerBase Look Controller nullptr"));
 	}
 }
 
@@ -149,9 +167,9 @@ void APlayerBase::StopJumping()
 void APlayerBase::Interaction()
 {
 	CLog::Print(TEXT("Interaction Pressed"));
-	FVector socketOffset = CameraBoom->SocketOffset;
-	socketOffset = FVector(socketOffset.X, socketOffset.Y * -1, socketOffset.Z);
-	CameraBoom->SocketOffset = socketOffset;
+	FVector SocketOffset = CameraBoom->SocketOffset;
+	SocketOffset = FVector(SocketOffset.X, SocketOffset.Y * -1, SocketOffset.Z);
+	CameraBoom->SocketOffset = SocketOffset;
 }
 
 void APlayerBase::AbilityOne()
@@ -179,9 +197,18 @@ void APlayerBase::SecondaryFire()
 	CLog::Print(TEXT("SecondaryFire Triggered"));
 }
 
-void APlayerBase::Reload()
+void APlayerBase::Reloading()
 {
 	CLog::Print(TEXT("Reload Pressed"));
+
+	if (AmmoComponent)
+	{
+		AmmoComponent->UseAbility();
+	}
+	else
+	{
+		CLog::Print("Hello");
+	}
 }
 
 void APlayerBase::QuickMelee()
@@ -189,8 +216,93 @@ void APlayerBase::QuickMelee()
 	CLog::Print(TEXT("QuickMelee Pressed"));
 }
 
+bool APlayerBase::TraceUnderCrosshair(float TraceDistance, FHitResult& OutHitResult, FVector& OutHitLocation, ECollisionChannel InCollisionChannel)
+{
+	// 뷰포트 크기 구하기
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	// 스크린에서 크로스헤어 위치 구하기
+	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+
+	// 플레이어 컨트롤러 참조
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+
+	if (PlayerController == nullptr) 
+	{
+		CLog::Log(TEXT("PlayerBase TraceUnderCrosshair PlayerController nullptr"));
+		return false;
+	}
+
+	// 2D 화면 공간 좌표를 3D 공간 지점과 방향으로 변환
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(PlayerController, CrosshairLocation, CrosshairWorldPosition, CrosshairWorldDirection);
+
+	if (bScreenToWorld)
+	{
+		const FVector TraceStartLocation = CrosshairWorldPosition;
+		const FVector TraceEndLocation = TraceStartLocation + CrosshairWorldDirection * TraceDistance;
+
+		UWorld* world = GetWorld();
+
+		if (world)
+		{
+			world->LineTraceSingleByChannel(OutHitResult, TraceStartLocation, TraceEndLocation, InCollisionChannel);
+		}
+		else
+		{
+			CLog::Log(TEXT("PlayerBase TraceUnderCrosshair world nullptr"));
+		}
+
+		if (OutHitResult.bBlockingHit)
+		{
+			OutHitLocation = OutHitResult.Location;
+			return true;
+		}
+		OutHitLocation = TraceEndLocation;
+	}
+	return false;
+}
+
+bool APlayerBase::GetDirectionToCrosshair(const FVector& StartLocation, FVector& OutDirection, ECollisionChannel InCollisionChannel)
+{
+	FVector HitLocation;
+	FHitResult HitResult;
+
+	bool bTrace = TraceUnderCrosshair(50000.f, HitResult, HitLocation, InCollisionChannel);
+
+	if (bTrace)
+	{
+		FVector Direction = HitResult.Location - StartLocation;
+		Direction.Normalize();
+
+		OutDirection = Direction;
+		
+		return true;
+	}
+	else
+	{
+		FVector Direction = HitLocation - StartLocation;
+		Direction.Normalize();
+
+		OutDirection = Direction;
+
+		return true;
+	}
+
+	return false;
+}
+
 void APlayerBase::StopMovement()
 {
-	CLog::Print(TEXT("Stop Movement"), -1,  2.f, FColor::Red);
 	GetCharacterMovement()->StopMovementImmediately();
+}
+
+void APlayerBase::MovementModeChanged(ACharacter* InCharacter, EMovementMode InPrevMovementMode, uint8 InPrevCustomMovementMode)
+{
+	
 }
