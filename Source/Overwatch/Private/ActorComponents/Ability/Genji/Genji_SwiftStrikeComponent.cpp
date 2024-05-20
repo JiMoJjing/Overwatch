@@ -1,4 +1,4 @@
-#include "ActorComponents/Ability/Genji/SwiftStrikeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -13,7 +13,7 @@
 #include "Utilities.h"
 
 
-USwiftStrikeComponent::USwiftStrikeComponent() : TimeDilationValue(0.2f), SwiftStrikeDistance(1884.f), SwiftStrikeSpeed(5000.f), bSwiftStrike(false), CapsuleSize2D(42.f, 96.f)
+UGenji_SwiftStrikeComponent::UGenji_SwiftStrikeComponent() : TimeDilationValue(0.2f), SwiftStrikeDistance(1884.f), SwiftStrikeSpeed(5000.f), bSwiftStrike(false), CapsuleSize2D(42.f, 96.f)
 , SwiftStrikeCapsuleSize2D(21.f, 48.f)
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -25,15 +25,15 @@ USwiftStrikeComponent::USwiftStrikeComponent() : TimeDilationValue(0.2f), SwiftS
 	OnSwiftStrikeCapsuleSizeTimelineFinished.BindUFunction(this, FName("SwiftStrikeCapsuleSizeTimelineFinished"));
 }
 
-void USwiftStrikeComponent::BeginPlay()
+void UGenji_SwiftStrikeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	PlayerBase = Cast<AGenji>(GetOwner());
 	if (PlayerBase)
 	{
-		PlayerBase->GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &USwiftStrikeComponent::OnSwiftStrikeComponentHit);
-		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &USwiftStrikeComponent::SwiftStrikeMontageInterrupted);
+		PlayerBase->GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &UGenji_SwiftStrikeComponent::OnSwiftStrikeComponentHit);
+		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UGenji_SwiftStrikeComponent::SwiftStrikeMontageInterrupted);
 		
 		PlayerBase->GetCharacterMovement()->MaxFlySpeed = SwiftStrikeSpeed;
 
@@ -61,36 +61,32 @@ void USwiftStrikeComponent::BeginPlay()
 	SwiftStrikeCapsuleSizeTimelineSettings();
 }
 
-void USwiftStrikeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UGenji_SwiftStrikeComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	SwiftStrikeCapsuleSizeTimeline.TickTimeline(DeltaTime);
 }
 
-void USwiftStrikeComponent::UseAbility()
+void UGenji_SwiftStrikeComponent::UseAbility()
 {
-	if (CanActivateAbility())
-	{
-		ActivateAbility();
-	}
+	Super::UseAbility();
 }
 
-void USwiftStrikeComponent::ActivateAbility()
+void UGenji_SwiftStrikeComponent::ActivateAbility()
 {
 	Super::ActivateAbility();
-
 	SwiftStrikeStarted();
 }
 
-void USwiftStrikeComponent::DeactivateAbility()
+void UGenji_SwiftStrikeComponent::DeactivateAbility()
 {
 	Super::DeactivateAbility();
 	SwiftStrikeFinishSetting();
 	CooldownStart();
 }
 
-void USwiftStrikeComponent::SwiftStrikeStarted()
+void UGenji_SwiftStrikeComponent::SwiftStrikeStarted()
 {
 	SwiftStrikeStartSetting();
 
@@ -109,7 +105,7 @@ void USwiftStrikeComponent::SwiftStrikeStarted()
 //	DeactivateAbility();
 //}
 
-void USwiftStrikeComponent::SetSwiftStrikeStartLocation()
+void UGenji_SwiftStrikeComponent::SetSwiftStrikeStartLocation()
 {
 	if (PlayerBase == nullptr)
 	{
@@ -121,7 +117,7 @@ void USwiftStrikeComponent::SetSwiftStrikeStartLocation()
 	SwiftStrikeStartLocation = PlayerBase->GetActorLocation();
 }
 
-void USwiftStrikeComponent::SetSwiftStrikeEndLocation()
+void UGenji_SwiftStrikeComponent::SetSwiftStrikeEndLocation()
 {
 	if (PlayerBase == nullptr)
 	{
@@ -153,7 +149,7 @@ void USwiftStrikeComponent::SetSwiftStrikeEndLocation()
 	DrawDebugLine(GetWorld(), PlayerBase->GetActorLocation(), SwiftStrikeEndLocation, FColor::Green, false, 5.f, 0U, 1.f);
 }
 
-void USwiftStrikeComponent::SwiftStrikeStartSetting()
+void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
 {
 	// 시작점, 도착점 세팅
 	SetSwiftStrikeStartLocation();
@@ -209,7 +205,7 @@ void USwiftStrikeComponent::SwiftStrikeStartSetting()
 	}
 }
 
-void USwiftStrikeComponent::SwiftStrikeFinishSetting()
+void UGenji_SwiftStrikeComponent::SwiftStrikeFinishSetting()
 {
 	if (PlayerBase == nullptr)
 	{
@@ -267,7 +263,7 @@ void USwiftStrikeComponent::SwiftStrikeFinishSetting()
 	}
 }
 
-void USwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
+void UGenji_SwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
 {
 	if (PlayerBase == nullptr)
 	{
@@ -296,7 +292,7 @@ void USwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
 	}
 }
 
-void USwiftStrikeComponent::OnSwiftStrikeComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+void UGenji_SwiftStrikeComponent::OnSwiftStrikeComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (PlayerBase == nullptr)
 	{
@@ -324,7 +320,7 @@ void USwiftStrikeComponent::OnSwiftStrikeComponentHit(UPrimitiveComponent* HitCo
 	}
 }
 
-void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineSettings()
+void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineSettings()
 {
 	if (SwiftStrikeCapsuleSizeCurveFloat)
 	{
@@ -338,7 +334,7 @@ void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineSettings()
 	}
 }
 
-void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineUpdate(float Alpha)
+void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineUpdate(float Alpha)
 {
 	if (PlayerBase == nullptr)
 	{
@@ -351,7 +347,7 @@ void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineUpdate(float Alpha)
 	PlayerBase->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize.X, CapsuleSize.Y);
 }
 
-void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineFinished()
+void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineFinished()
 {
 	if (PlayerBase == nullptr)
 	{
@@ -362,7 +358,7 @@ void USwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineFinished()
 	PlayerBase->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize2D.X, CapsuleSize2D.Y);
 }
 
-void USwiftStrikeComponent::SwiftStrikeMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
+void UGenji_SwiftStrikeComponent::SwiftStrikeMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage == SwiftStrikeMontage && bInterrupted)
 	{
@@ -370,7 +366,7 @@ void USwiftStrikeComponent::SwiftStrikeMontageInterrupted(UAnimMontage* Montage,
 	}
 }
 
-void USwiftStrikeComponent::SwiftStrikeMontageFinished()
+void UGenji_SwiftStrikeComponent::SwiftStrikeMontageFinished()
 {
 	DeactivateAbility();
 }

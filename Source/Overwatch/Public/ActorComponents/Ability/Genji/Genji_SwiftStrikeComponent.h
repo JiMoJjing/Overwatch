@@ -1,20 +1,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorComponents/Ability/AbilityComponent.h"
+#include "ActorComponents/Ability/CooldownAbilityComponent.h"
 #include "Components/TimelineComponent.h"
-#include "SwiftStrikeComponent.generated.h"
+#include "Genji_SwiftStrikeComponent.generated.h"
 
 class UAnimMontage;
 class ASwiftStrikeCollider;
 class AGenji;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class OVERWATCH_API USwiftStrikeComponent : public UAbilityComponent
+class OVERWATCH_API UGenji_SwiftStrikeComponent : public UCooldownAbilityComponent
 {
 	GENERATED_BODY()
 public:	
-	USwiftStrikeComponent();
+	UGenji_SwiftStrikeComponent();
 
 protected:
 	virtual void BeginPlay() override;

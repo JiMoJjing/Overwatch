@@ -1,6 +1,6 @@
 #include "AnimNotify/Genji/ANS_SwiftStrikeUpdate.h"
 #include "Characters/Player/Genji/Genji.h"
-#include "ActorComponents/Ability/Genji/SwiftStrikeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
 
 FString UANS_SwiftStrikeUpdate::GetNotifyName_Implementation() const
 {
@@ -11,9 +11,9 @@ void UANS_SwiftStrikeUpdate::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimS
 {
 	AGenji* genjiRef = Cast<AGenji>(MeshComp->GetOwner());
 
-	if (genjiRef && genjiRef->GetSwiftStrikeComponent())
+	if (genjiRef && genjiRef->GetGenji_SwiftStrikeComponent())
 	{
-		genjiRef->GetSwiftStrikeComponent()->SwiftStrikeUpdate(FrameDeltaTime);
+		genjiRef->GetGenji_SwiftStrikeComponent()->SwiftStrikeUpdate(FrameDeltaTime);
 	}
 	else
 	{

@@ -11,3 +11,23 @@ enum class EAbilityState : uint8
 };
 ENUM_CLASS_FLAGS(EAbilityState);
 
+FORCEINLINE static bool IsAbilityState(const uint8& AbilityState, EAbilityState InAbilityState)
+{
+    return AbilityState & static_cast<uint8>(InAbilityState);
+}
+
+FORCEINLINE static bool IsNotAbilityState(const uint8& AbilityState, EAbilityState InAbilityState)
+{
+    return !(AbilityState & static_cast<uint8>(InAbilityState));
+}
+
+FORCEINLINE static void AddAbilityState(uint8& AbilityState, EAbilityState InAbilityState)
+{
+    AbilityState |= static_cast<uint8>(InAbilityState);
+}
+
+FORCEINLINE static void SubAbilityState(uint8& AbilityState, EAbilityState InAbilityState)
+{
+    AbilityState &= ~static_cast<uint8>(InAbilityState);
+}
+

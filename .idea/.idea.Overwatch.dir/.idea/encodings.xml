@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding" addBOMForNewFiles="with BOM under Windows, with no BOM otherwise">
-    <file url="file://$PROJECT_DIR$/Source/Overwatch/Private/ActorComponents/Ability/Genji/SwiftStrikeComponent.cpp" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Private/ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.cpp" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Private/ActorComponents/Pools/ProjectilePoolComponent.cpp" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Private/Characters/Player/PlayerBase.cpp" charset="x-windows-949" />
     <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/ActorComponents/Ability/AbilityComponent.h" charset="x-windows-949" />
     <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/ActorComponents/Ability/AmmoComponent.h" charset="x-windows-949" />
-    <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/ActorComponents/Ability/Genji/SwiftStrikeComponent.h" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/Characters/CharacterBase.h" charset="x-windows-949" />
+    <file url="file://$PROJECT_DIR$/Source/Overwatch/Public/Characters/Player/PlayerBase.h" charset="x-windows-949" />
+    <file url="PROJECT" charset="x-windows-949" />
   </component>
 </project>

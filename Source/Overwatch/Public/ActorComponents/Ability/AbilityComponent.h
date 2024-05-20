@@ -6,8 +6,7 @@
 #include "Enums/AbilityState.h"
 #include "AbilityComponent.generated.h"
 
-
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityStateChanged, uint8, InAbilityState);
 
 class UAbilityManagementComponent;
 class APlayerBase;
@@ -26,24 +25,21 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-
-public:
+	// AbilityType Getter
 	FORCEINLINE EAbilityType GetAbilityType() const { return AbilityType; }
 
-	// 기술 사용 함수. 캐릭터의 입력에서 호출. 반드시 재정의
+	// AbilityTexture Getter
 	UFUNCTION()
-	virtual void UseAbility() PURE_VIRTUAL(UAbilityComponent::UseAbility, );
+	FORCEINLINE UTexture* GetAbilityTexture() const {return AbilityTexture;}
+	
+	// 기술 사용 함수. 캐릭터의 입력에서 호출. 하위 클래스에서 재정의
+	// UFUNCTION()
+	// virtual void UseAbility() PURE_VIRTUAL(UAbilityComponent::UseAbility, );
 
-
+	UFUNCTION()
+	virtual void UseAbility();
+	
 protected:
-	// AbilityState Bitmask Add, Sub
-	void AddAbilityState(EAbilityState InAbilityState);
-	void SubAbilityState(EAbilityState InAbilityState);
-
-	// AbilityState Is, IsNot
-	FORCEINLINE bool IsAbilityState(EAbilityState InAbilityState) const { return AbilityState & static_cast<uint8>(InAbilityState); }
-	FORCEINLINE bool IsNotAbilityState(EAbilityState InAbilityState) const { return !(AbilityState & static_cast<uint8>(InAbilityState)); }
-
 	// 기술이 실행 가능한지 체크
 	bool CanActivateAbility();
 
@@ -51,7 +47,7 @@ protected:
 	bool CanCancelAbility();
 
 	/**
-	* AbilityManagementComponent에 해당 기술이 시작됐음과 끝났음을 알려주는 함수
+	* 기술이 시작될 때, 끝날 때 호출 되도록 구현할 것
 	*/
 	virtual void ActivateAbility();
 	virtual void DeactivateAbility();
@@ -65,16 +61,16 @@ protected:
 	UFUNCTION()
 	virtual void OnAbilityDeactivated(EAbilityType InAbilityType);
 
+	void AbilityStateChanged() const;
+	
+public:
+	UFUNCTION()
+	virtual void AbilityWidgetInit();
 
-	// Cooldown 시작
-	virtual void CooldownStart();
-
-	// bHasCooldownWidget이 true면 SetTimer에서 호출 될 함수 ( 0.1초 간격 )
-	virtual void CooldownTimerTick();
-
-	// bHasCooldownWidget이 false면 SetTimer에서 호출 or CooldownTimerTick에서 NowCooldownTime이 0이되면 호출
-	virtual void CooldownEnd();
-		
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnAbilityStateChanged OnAbilityStateChanged;
+	
 protected:
 	// AbilityManagementComponent Reference
 	UPROPERTY()
@@ -100,22 +96,7 @@ protected:
 	UPROPERTY(EditAnyWhere, BlueprintReadOnly, category = "Ability", meta = (AllowPrivateAccess = "true", Bitmask, BitmaskEnum = EAbilityType))
 	uint8 MakeUnavailableAbilityTypes = 0;
 
-	// 쿨다운 사용 여부
-	UPROPERTY(EditAnywhere, Category = "Cooldown")
-	bool bUseCooldown = true;
-
-	// 쿨다운 위젯 사용 여부
-	UPROPERTY(EditAnywhere, Category = "Cooldown", meta = (EditCondition = "bUseCooldown"))
-	bool bHasCooldownWidget = false;
-
-	// 쿨다운 시간
-	UPROPERTY(EditAnywhere, Category = "Cooldown", meta = (EditCondition = "bUseCooldown"))
-	float CooldownDuration;
-
-	// 쿨다운 TimerHandle
-	UPROPERTY()
-	FTimerHandle CooldownTimerHandle;
-
-	// 현재 쿨타임
-	float NowCooldownTime;
+	// Widget
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Widget", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UTexture> AbilityTexture;
 };

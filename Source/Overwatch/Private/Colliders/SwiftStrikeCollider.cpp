@@ -45,10 +45,9 @@ void ASwiftStrikeCollider::SetCollisionEnabled(ECollisionEnabled::Type InNewType
 
 void ASwiftStrikeCollider::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherComp)
+	if (OtherComp->GetOwner())
 	{
-		FString str = FString::Printf(TEXT("OverlappedActor : %s"), *OtherComp->GetOwner()->GetName());
-		CLog::Print(str);
+		UGameplayStatics::ApplyDamage(OtherComp->GetOwner(), 50.f, GetInstigator()->GetController(), GetOwner(), UDamageType::StaticClass());
 	}
 }
 

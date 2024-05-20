@@ -1,26 +1,24 @@
 #include "Characters/Player/Genji/Genji.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/MovementComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/GameplayStatics.h"
 
 #include "ActorComponents/Ability/Genji/Genji_PrimaryFireComponent.h"
 #include "ActorComponents/Ability/Genji/Genji_SecondaryFireComponent.h"
-#include "ActorComponents/Ability/Genji/SwiftStrikeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_DeflectComponent.h"
+#include "ActorComponents/Ability/UltimateAbilityComponent.h"
 #include "ActorComponents/Pools/ProjectilePoolComponent.h"
-#include "Colliders/SwiftStrikeCollider.h"
 
 #include "Utilities.h"
 
 
-AGenji::AGenji() : JumpCount(0)
+AGenji::AGenji()
 {
-	SwiftStrikeComponent = CreateDefaultSubobject<USwiftStrikeComponent>(TEXT("SwiftStrikeComponent"));
 	ProjectilePoolComponent = CreateDefaultSubobject<UProjectilePoolComponent>(TEXT("ProjectilePoolComponent"));
 	PrimaryFireComponent = CreateDefaultSubobject<UGenji_PrimaryFireComponent>(TEXT("PrimaryFireComponent"));
 	SecondaryFireComponent = CreateDefaultSubobject<UGenji_SecondaryFireComponent>(TEXT("SecondaryFireComponent"));
+	AbilityOneComponent = CreateDefaultSubobject<UGenji_SwiftStrikeComponent>(TEXT("Genji_SwiftStrikeComponent"));
+	AbilityTwoComponent = CreateDefaultSubobject<UGenji_DeflectComponent>(TEXT("Genji_DeflectComponent"));
+	UltimateAbilityComponent = CreateDefaultSubobject<UUltimateAbilityComponent>(TEXT("UltimateAbilityComponent"));
 }
 
 void AGenji::BeginPlay()
@@ -103,63 +101,65 @@ void AGenji::MovementModeChanged(ACharacter* InCharacter, EMovementMode InPrevMo
 
 }
 
-UGenji_PrimaryFireComponent* AGenji::GetPrimaryFireComponent() const
+UGenji_PrimaryFireComponent* AGenji::GetGenji_PrimaryFireComponent() const
 {
 	if (PrimaryFireComponent)
 	{
 		return Cast<UGenji_PrimaryFireComponent>(PrimaryFireComponent);
 	}
-	else
-	{
-		CLog::Log(TEXT("AGenji GetPrimaryFireComponent PrimaryFireComponent nullptr"));
-	}
 	return nullptr;
 }
 
-UGenji_SecondaryFireComponent* AGenji::GetSecondaryFireComponent() const
+UGenji_SecondaryFireComponent* AGenji::GetGenji_SecondaryFireComponent() const
 {
 	if (SecondaryFireComponent)
 	{
 		return Cast<UGenji_SecondaryFireComponent>(SecondaryFireComponent);
 	}
-	else
+	return nullptr;
+}
+
+UGenji_SwiftStrikeComponent* AGenji::GetGenji_SwiftStrikeComponent() const
+{
+	if (AbilityOneComponent)
 	{
-		CLog::Log(TEXT("AGenji GetSecondaryFireComponent SecondaryFireComponent nullptr"));
+		return Cast<UGenji_SwiftStrikeComponent>(AbilityOneComponent);
 	}
 	return nullptr;
 }
 
-USwiftStrikeComponent* AGenji::GetSwiftStrikeComponent() const
+UGenji_DeflectComponent* AGenji::GetGenji_DeflectComponent() const
 {
-	if (SwiftStrikeComponent)
+	if(AbilityTwoComponent)
 	{
-		return Cast<USwiftStrikeComponent>(SwiftStrikeComponent);
-	}
-	else
-	{
-		CLog::Log(TEXT("AGenji GetSwiftStrikeComponent SwiftStrikeComponent nullptr"));
+		return Cast<UGenji_DeflectComponent>(AbilityTwoComponent);
 	}
 	return nullptr;
 }
 
 void AGenji::AbilityOne()
 {
-	if (SwiftStrikeComponent)
+	if (AbilityOneComponent)
 	{
-		SwiftStrikeComponent->UseAbility();
-	}
-	else
-	{
-		CLog::Log(TEXT("AGenji AbilityOne SwiftStrikeComponent nullptr"));
+		AbilityOneComponent->UseAbility();
 	}
 }
 
 void AGenji::AbilityTwo()
 {
+	if(AbilityTwoComponent)
+	{
+		AbilityTwoComponent->UseAbility();
+	}
 }
 
 void AGenji::AbilityThree()
 {
+	if(UltimateAbilityComponent)
+	{
+		Super::AbilityThree();
+		UltimateAbilityComponent->UseAbility();
+	}
 }
 
 void AGenji::PrimaryFire()
@@ -168,10 +168,6 @@ void AGenji::PrimaryFire()
 	{
 		PrimaryFireComponent->UseAbility();
 	}
-	else
-	{
-		CLog::Log(TEXT("AGenji PrimaryFire PrimaryFireComponent nullptr"));
-	}
 }
 
 void AGenji::SecondaryFire()
@@ -179,10 +175,6 @@ void AGenji::SecondaryFire()
 	if (SecondaryFireComponent)
 	{
 		SecondaryFireComponent->UseAbility();
-	}
-	else
-	{
-		CLog::Log(TEXT("AGenji SecondaryFire SecondaryFireComponent nullptr"));
 	}
 }
 
@@ -193,6 +185,11 @@ void AGenji::Reloading()
 
 void AGenji::QuickMelee()
 {
+}
+
+void AGenji::ApplyDamageSuccess_Implementation(float Damage, bool bIsHeadShot)
+{
+	Super::ApplyDamageSuccess_Implementation(Damage, bIsHeadShot);
 }
 
 void AGenji::SecondJump()

@@ -25,14 +25,17 @@ void UAmmoComponent::BeginPlay()
 void UAmmoComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	FString str = FString::Printf(TEXT("%d / %d"), CurrentAmmo, MaxAmmo);
-	CLog::Print(str, 10, 0.01f, FColor::White);
 }
 
 void UAmmoComponent::UseAbility()
 {
 	if (IsAmmoFull()) return;
+	
+	if (CanActivateAbility())
+	{
+		ActivateAbility();
+		return;
+	}
 
 	if (AbilityManagementComponent && AbilityManagementComponent->IsAbilityActivate())
 	{
@@ -40,10 +43,6 @@ void UAmmoComponent::UseAbility()
 		return;
 	}
 
-	if (CanActivateAbility())
-	{
-		ActivateAbility();
-	}
 }
 
 void UAmmoComponent::ActivateAbility()
@@ -85,14 +84,30 @@ void UAmmoComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupt
 	}
 }
 
+void UAmmoComponent::AmmoChanged() const
+{
+	if(OnAmmoChanged.IsBound())
+	{
+		OnAmmoChanged.Broadcast(CurrentAmmo);
+	}
+}
+
 void UAmmoComponent::ConsumeAmmo(int32 InAmount)
 {
 	CurrentAmmo - InAmount > 0 ? CurrentAmmo -= InAmount : CurrentAmmo = 0;
+	
+	AmmoChanged();
+	
+	if(CurrentAmmo == 0)
+	{
+		bBufferedInput = true;
+	}
 }
 
 void UAmmoComponent::Reload()
 {
 	CurrentAmmo = MaxAmmo;
+	AmmoChanged();
 	DeactivateAbility();
 }
 

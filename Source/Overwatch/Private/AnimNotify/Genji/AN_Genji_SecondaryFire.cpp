@@ -11,9 +11,9 @@ void UAN_Genji_SecondaryFire::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 {
 	AGenji* GenjiRef = Cast<AGenji>(MeshComp->GetOwner());
 
-	if (GenjiRef && GenjiRef->GetSecondaryFireComponent())
+	if (GenjiRef && GenjiRef->GetGenji_SecondaryFireComponent())
 	{
-		GenjiRef->GetSecondaryFireComponent()->TripleShot();
+		GenjiRef->GetGenji_SecondaryFireComponent()->TripleShot();
 	}
 	else
 	{

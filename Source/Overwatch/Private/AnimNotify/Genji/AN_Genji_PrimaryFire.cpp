@@ -11,9 +11,9 @@ void UAN_Genji_PrimaryFire::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 {
 	AGenji* GenjiRef = Cast<AGenji>(MeshComp->GetOwner());
 
-	if (GenjiRef && GenjiRef->GetPrimaryFireComponent())
+	if (GenjiRef && GenjiRef->GetGenji_PrimaryFireComponent())
 	{
-		GenjiRef->GetPrimaryFireComponent()->SingleShot();
+		GenjiRef->GetGenji_PrimaryFireComponent()->SingleShot();
 	}
 	else
 	{

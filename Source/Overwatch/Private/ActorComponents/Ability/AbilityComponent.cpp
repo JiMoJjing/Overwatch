@@ -30,7 +30,7 @@ void UAbilityComponent::BeginPlay()
 		AbilityManagementComponent->OnAbilityDeactivated.AddDynamic(this, &UAbilityComponent::OnAbilityDeactivated);
 	}
 
-	AddAbilityState(EAbilityState::EAS_Available);
+	AddAbilityState(AbilityState, EAbilityState::EAS_Available);
 }
 
 void UAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -39,19 +39,17 @@ void UAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 }
 
-void UAbilityComponent::AddAbilityState(EAbilityState InAbilityState)
+void UAbilityComponent::UseAbility()
 {
-	AbilityState |= static_cast<uint8>(InAbilityState);
-}
-
-void UAbilityComponent::SubAbilityState(EAbilityState InAbilityState)
-{
-	AbilityState &= ~static_cast<uint8>(InAbilityState);
+	if(CanActivateAbility())
+	{
+		ActivateAbility();
+	}
 }
 
 bool UAbilityComponent::CanActivateAbility()
 {
-	bool bAvailable = IsAbilityState(EAbilityState::EAS_Available) && IsNotAbilityState(EAbilityState::EAS_Active) && IsNotAbilityState(EAbilityState::EAS_Cooldown);
+	bool bAvailable = IsAbilityState(AbilityState, EAbilityState::EAS_Available) && IsNotAbilityState(AbilityState, EAbilityState::EAS_Active) && IsNotAbilityState(AbilityState, EAbilityState::EAS_Cooldown);
 	bAvailable &= CanCancelAbility();
 
 	return bAvailable;
@@ -59,8 +57,6 @@ bool UAbilityComponent::CanActivateAbility()
 
 bool UAbilityComponent::CanCancelAbility()
 {
-	bool bCanCancel = false;
-
 	EAbilityType NowAbilityType = AbilityManagementComponent->GetAbilityType();
 
 	return (NowAbilityType == EAbilityType::EAT_None) || (CancelableAbilityTypes & static_cast<uint8>(NowAbilityType));
@@ -72,7 +68,8 @@ void UAbilityComponent::ActivateAbility()
 	{
 		AbilityManagementComponent->ActivateAbility(AbilityType);
 	}
-	AddAbilityState(EAbilityState::EAS_Active);
+	AddAbilityState(AbilityState, EAbilityState::EAS_Active);
+	AbilityStateChanged();
 }
 
 void UAbilityComponent::DeactivateAbility()
@@ -81,14 +78,16 @@ void UAbilityComponent::DeactivateAbility()
 	{
 		AbilityManagementComponent->DeactivateAbility(AbilityType);
 	}
-	SubAbilityState(EAbilityState::EAS_Active);
+	SubAbilityState(AbilityState, EAbilityState::EAS_Active);
+	AbilityStateChanged();
 }
 
 void UAbilityComponent::OnAbilityActivated(EAbilityType InAbilityType)
 {
 	if (MakeUnavailableAbilityTypes & static_cast<uint8>(InAbilityType))
 	{
-		SubAbilityState(EAbilityState::EAS_Available);
+		SubAbilityState(AbilityState, EAbilityState::EAS_Available);
+		AbilityStateChanged();
 	}
 }
 
@@ -96,43 +95,21 @@ void UAbilityComponent::OnAbilityDeactivated(EAbilityType InAbilityType)
 {
 	if (MakeUnavailableAbilityTypes & static_cast<uint8>(InAbilityType))
 	{
-		AddAbilityState(EAbilityState::EAS_Available);
+		AddAbilityState(AbilityState, EAbilityState::EAS_Available);
+		AbilityStateChanged();
 	}
 }
 
-void UAbilityComponent::CooldownStart()
+void UAbilityComponent::AbilityStateChanged() const
 {
-	AddAbilityState(EAbilityState::EAS_Cooldown);
-
-	if (bHasCooldownWidget)
+	if(OnAbilityStateChanged.IsBound())
 	{
-		NowCooldownTime = CooldownDuration;
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UAbilityComponent::CooldownTimerTick, 0.1f, true);
-	}
-	else
-	{
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UAbilityComponent::CooldownEnd, CooldownDuration, false);
+		OnAbilityStateChanged.Broadcast(AbilityState);
 	}
 }
 
-void UAbilityComponent::CooldownTimerTick()
+void UAbilityComponent::AbilityWidgetInit()
 {
-	NowCooldownTime -= 0.1f;
-	CLog::Print(NowCooldownTime, 3, 0.1f, FColor::Yellow);
-
-	if (FMath::IsNearlyZero(NowCooldownTime, 0.01f))
-	{
-		CooldownEnd();
-	}
-
+	AbilityStateChanged();
 }
 
-void UAbilityComponent::CooldownEnd()
-{
-	SubAbilityState(EAbilityState::EAS_Cooldown);
-
-	if (GetOwner()->GetWorldTimerManager().IsTimerActive(CooldownTimerHandle))
-	{
-		GetOwner()->GetWorldTimerManager().ClearTimer(CooldownTimerHandle);
-	}
-}

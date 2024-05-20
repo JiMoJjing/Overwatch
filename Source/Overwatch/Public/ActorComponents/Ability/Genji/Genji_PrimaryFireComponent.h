@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorComponents/Ability/AbilityComponent.h"
+#include "ActorComponents/Ability/CooldownAbilityComponent.h"
 #include "Genji_PrimaryFireComponent.generated.h"
 
 class UProjectilePoolComponent;
@@ -9,7 +9,7 @@ class UAmmoComponent;
 class UAnimMontage;
 
 UCLASS()
-class OVERWATCH_API UGenji_PrimaryFireComponent : public UAbilityComponent
+class OVERWATCH_API UGenji_PrimaryFireComponent : public UCooldownAbilityComponent
 {
 	GENERATED_BODY()
 	
@@ -29,12 +29,7 @@ protected:
 
 private:
 	void PrimaryFire();
-
-	//void DelayTimerStart();
-	//void DelayTimerEnd();
-	//bool IsDelayTimerActive();
 	void OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted);
-
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

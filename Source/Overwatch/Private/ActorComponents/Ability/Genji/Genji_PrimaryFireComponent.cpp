@@ -25,10 +25,7 @@ void UGenji_PrimaryFireComponent::BeginPlay()
 
 void UGenji_PrimaryFireComponent::UseAbility()
 {
-	if (CanActivateAbility())
-	{
-		ActivateAbility();
-	}
+	Super::UseAbility();
 }
 
 void UGenji_PrimaryFireComponent::ActivateAbility()
@@ -84,36 +81,6 @@ void UGenji_PrimaryFireComponent::SingleShot()
 		}
 	}
 }
-
-//void UGenji_PrimaryFireComponent::DelayTimerStart()
-//{
-//	if (GetOwner())
-//	{
-//		GetOwner()->GetWorldTimerManager().SetTimer(DelayTimerHandle, this, &UGenji_PrimaryFireComponent::DelayTimerEnd, DelayTime, false);
-//	}
-//	else
-//	{
-//		CLog::Log(TEXT("UGenji_PrimaryFireComponent DelayTimerStart GetOwner() nullptr"));
-//	}
-//}
-//
-//void UGenji_PrimaryFireComponent::DelayTimerEnd()
-//{
-//	DeactivateAbility();
-//}
-//
-//bool UGenji_PrimaryFireComponent::IsDelayTimerActive()
-//{
-//	bool bActive = false;
-//
-//	if (GetOwner())
-//	{
-//		bActive = GetOwner()->GetWorldTimerManager().IsTimerActive(DelayTimerHandle);
-//	}
-//
-//	return bActive;
-//}
-
 
 void UGenji_PrimaryFireComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
 {

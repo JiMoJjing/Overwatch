@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorComponents/Ability/AbilityComponent.h"
+#include "ActorComponents/Ability/CooldownAbilityComponent.h"
 #include "Genji_SecondaryFireComponent.generated.h"
 
 class UAnimMontage;
@@ -9,7 +9,7 @@ class UProjectilePoolComponent;
 class UAmmoComponent;
 
 UCLASS()
-class OVERWATCH_API UGenji_SecondaryFireComponent : public UAbilityComponent
+class OVERWATCH_API UGenji_SecondaryFireComponent : public UCooldownAbilityComponent
 {
 	GENERATED_BODY()
 	

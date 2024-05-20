@@ -7,11 +7,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 
 #include "Kismet/GameplayStatics.h"
 
 #include "ActorComponents/Ability/AbilityManagementComponent.h"
 #include "ActorComponents/Ability/AmmoComponent.h"
+#include "ActorComponents/Ability/UltimateAbilityComponent.h"
+
 #include "Utilities.h"
 
 APlayerBase::APlayerBase()
@@ -123,7 +126,7 @@ void APlayerBase::MoveForward(const FInputActionValue& Value)
 	const FRotator YawRotation = FRotator(0.f, ControlRotation.Yaw, 0.f);
 
 	const FVector ForwardVector = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
+	
 	AddMovementInput(ForwardVector, InputValue);
 }
 
@@ -148,10 +151,6 @@ void APlayerBase::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
-	else
-	{
-		CLog::Log(TEXT("PlayerBase Look Controller nullptr"));
-	}
 }
 
 void APlayerBase::Jump()
@@ -162,6 +161,38 @@ void APlayerBase::Jump()
 void APlayerBase::StopJumping()
 {
 	Super::StopJumping();
+}
+
+void APlayerBase::StopMovement()
+{
+	GetCharacterMovement()->StopMovementImmediately();
+}
+
+void APlayerBase::CharacterDeath()
+{
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+}
+
+UAbilityComponent* APlayerBase::GetAbilityComponent(EAbilityType InAbilityType) const
+{
+	switch (InAbilityType)
+	{
+	case EAbilityType::EAT_PrimaryFire:
+		return PrimaryFireComponent;
+	case EAbilityType::EAT_SecondaryFire:
+		return SecondaryFireComponent;
+	case EAbilityType::EAT_AbilityOne:
+		return AbilityOneComponent;
+	case EAbilityType::EAT_AbilityTwo:
+		return AbilityTwoComponent;
+	case EAbilityType::EAT_AbilityThree:
+		return UltimateAbilityComponent;
+	case EAbilityType::EAT_QuickMelee:
+		return QuickMeleeComponent;
+		default:
+			return nullptr;
+	}
 }
 
 void APlayerBase::Interaction()
@@ -199,15 +230,10 @@ void APlayerBase::SecondaryFire()
 
 void APlayerBase::Reloading()
 {
-	CLog::Print(TEXT("Reload Pressed"));
-
+	CLog::Print(TEXT("Reloading Pressed"));
 	if (AmmoComponent)
 	{
 		AmmoComponent->UseAbility();
-	}
-	else
-	{
-		CLog::Print("Hello");
 	}
 }
 
@@ -216,7 +242,16 @@ void APlayerBase::QuickMelee()
 	CLog::Print(TEXT("QuickMelee Pressed"));
 }
 
-bool APlayerBase::TraceUnderCrosshair(float TraceDistance, FHitResult& OutHitResult, FVector& OutHitLocation, ECollisionChannel InCollisionChannel)
+void APlayerBase::ApplyDamageSuccess_Implementation(float Damage, bool bIsHeadShot)
+{
+	if(UltimateAbilityComponent)
+	{
+		UltimateAbilityComponent->AddUltimateGauge(Damage);
+	}
+	ApplyDamageSuccessEvent(bIsHeadShot);
+}
+
+bool APlayerBase::TraceUnderCrosshair(const float TraceDistance, FHitResult& OutHitResult, FVector& OutHitLocation,const ECollisionChannel InCollisionChannel)
 {
 	// 뷰포트 크기 구하기
 	FVector2D ViewportSize;
@@ -247,11 +282,10 @@ bool APlayerBase::TraceUnderCrosshair(float TraceDistance, FHitResult& OutHitRes
 		const FVector TraceStartLocation = CrosshairWorldPosition;
 		const FVector TraceEndLocation = TraceStartLocation + CrosshairWorldDirection * TraceDistance;
 
-		UWorld* world = GetWorld();
-
-		if (world)
+		if (UWorld* world = GetWorld())
 		{
 			world->LineTraceSingleByChannel(OutHitResult, TraceStartLocation, TraceEndLocation, InCollisionChannel);
+			
 		}
 		else
 		{
@@ -261,6 +295,7 @@ bool APlayerBase::TraceUnderCrosshair(float TraceDistance, FHitResult& OutHitRes
 		if (OutHitResult.bBlockingHit)
 		{
 			OutHitLocation = OutHitResult.Location;
+			UKismetSystemLibrary::DrawDebugLine(this, GetActorLocation(), OutHitLocation, FLinearColor::Yellow, 5.f, 1.f);
 			return true;
 		}
 		OutHitLocation = TraceEndLocation;
@@ -268,7 +303,7 @@ bool APlayerBase::TraceUnderCrosshair(float TraceDistance, FHitResult& OutHitRes
 	return false;
 }
 
-bool APlayerBase::GetDirectionToCrosshair(const FVector& StartLocation, FVector& OutDirection, ECollisionChannel InCollisionChannel)
+bool APlayerBase::GetDirectionToCrosshair(const FVector& StartLocation, FVector& OutDirection, const ECollisionChannel InCollisionChannel)
 {
 	FVector HitLocation;
 	FHitResult HitResult;
@@ -293,16 +328,17 @@ bool APlayerBase::GetDirectionToCrosshair(const FVector& StartLocation, FVector&
 
 		return true;
 	}
-
-	return false;
-}
-
-void APlayerBase::StopMovement()
-{
-	GetCharacterMovement()->StopMovementImmediately();
 }
 
 void APlayerBase::MovementModeChanged(ACharacter* InCharacter, EMovementMode InPrevMovementMode, uint8 InPrevCustomMovementMode)
 {
 	
+}
+
+void APlayerBase::ApplyDamageSuccessEvent(bool bIsHeadShot) const
+{
+	if(OnApplyDamageSuccessEvent.IsBound())
+	{
+		OnApplyDamageSuccessEvent.Broadcast(bIsHeadShot);
+	}
 }

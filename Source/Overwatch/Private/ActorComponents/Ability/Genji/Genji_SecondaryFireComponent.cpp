@@ -25,10 +25,7 @@ void UGenji_SecondaryFireComponent::BeginPlay()
 
 void UGenji_SecondaryFireComponent::UseAbility()
 {
-	if (CanActivateAbility())
-	{
-		ActivateAbility();
-	}
+	Super::UseAbility();
 }
 
 void UGenji_SecondaryFireComponent::ActivateAbility()

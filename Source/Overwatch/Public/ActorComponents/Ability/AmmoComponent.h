@@ -4,7 +4,7 @@
 #include "ActorComponents/Ability/AbilityComponent.h"
 #include "AmmoComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChanged, int32, MaxAmmo, int32, CurrentAmmo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAmmoChanged, int32, CurrentAmmo);
 
 class UAnimMontage;
 
@@ -26,7 +26,7 @@ public:
 
 	// 탄 소모
 	void ConsumeAmmo(int32 InAmount);
-
+ 
 	// 재장전 ( 재장전 Montage의 AnimNotify에서 호출
 	void Reload();
 
@@ -53,6 +53,7 @@ protected:
 	UFUNCTION()
 	void OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted);
 
+	void AmmoChanged() const;
 
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -64,9 +65,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	int32 MaxAmmo;
-
+	
 	UPROPERTY()
 	int32 CurrentAmmo;
 
 	bool bBufferedInput = false;
+
 };

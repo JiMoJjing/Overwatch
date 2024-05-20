@@ -1,6 +1,6 @@
 #include "AnimNotify/Genji/AN_SwiftStrikeFinished.h"
 #include "Characters/Player/Genji/Genji.h"
-#include "ActorComponents/Ability/Genji/SwiftStrikeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
 
 FString UAN_SwiftStrikeFinished::GetNotifyName_Implementation() const
 {
@@ -11,9 +11,9 @@ void UAN_SwiftStrikeFinished::Notify(USkeletalMeshComponent* MeshComp, UAnimSequ
 {
 	AGenji* genjiRef = Cast<AGenji>(MeshComp->GetOwner());
 
-	if (genjiRef && genjiRef->GetSwiftStrikeComponent())
+	if (genjiRef && genjiRef->GetGenji_SwiftStrikeComponent())
 	{
-		genjiRef->GetSwiftStrikeComponent()->SwiftStrikeMontageFinished();
+		genjiRef->GetGenji_SwiftStrikeComponent()->SwiftStrikeMontageFinished();
 	}
 	else
 	{

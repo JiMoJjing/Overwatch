@@ -1,18 +1,22 @@
 #include "Projectiles/ProjectileBase.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "Utilities.h"
 
-AProjectileBase::AProjectileBase() : ProjectileSphereRadius(1.f)
+AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	ProjectileSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-	SetRootComponent(ProjectileSphereComponent);
+	HitSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("HitSphereComponent"));
+	SetRootComponent(HitSphereComponent);
 
-	ProjectileSphereComponent->SetCollisionProfileName(FName(TEXT("Team1Collider")));
-	ProjectileSphereComponent->SetSphereRadius(1.f);
+	HitSphereComponent->SetCollisionProfileName(FName(TEXT("Team1Collider")));
+	HitSphereComponent->SetSphereRadius(1.f);
+
+	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
+	NiagaraComponent->SetupAttachment(HitSphereComponent);
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 }
@@ -21,12 +25,12 @@ void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ProjectileSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AProjectileBase::OnSphereBeginOverlap);
-	ProjectileSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
+	//HitSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AProjectileBase::OnHitSphereBeginOverlap);
+	HitSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
 	
 
-	ProjectileSphereComponent->SetSphereRadius(ProjectileSphereRadius);
-	ProjectileSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitSphereComponent->SetSphereRadius(HitSphereRadius);
+	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ProjectileMovementComponent->InitialSpeed = ProjectileInitialSpeed;
 	ProjectileMovementComponent->MaxSpeed = ProjectileMaxSpeed;
@@ -45,10 +49,12 @@ void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Dire
 	SetActorLocation(StartLocation);
 	SetActorRotation(Direction.Rotation());
 	
-	ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->InitialSpeed;
-	ProjectileSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+	ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->InitialSpeed;
 	ProjectileMovementComponent->SetActive(true);
+	
+	NiagaraComponent->Activate(true);
 	
 	if (LifeSpan != 0.0f)
 	{
@@ -65,15 +71,17 @@ void AProjectileBase::Deactivate()
 		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
 	}
 
-	ProjectileSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ProjectileMovementComponent->SetActive(false);
-
 	SetActorLocation(FVector::ZeroVector);
+	
+	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ProjectileMovementComponent->SetActive(false);
+	NiagaraComponent->Deactivate();
+
 	
 	bCanActivate = true;
 }
 
-void AProjectileBase::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AProjectileBase::OnHitSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Deactivate();
 }

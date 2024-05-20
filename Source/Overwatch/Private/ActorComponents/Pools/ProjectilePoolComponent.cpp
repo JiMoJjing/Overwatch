@@ -23,8 +23,7 @@ void UProjectilePoolComponent::BeginPlay()
 
 		for (int i = 0; i < PoolSize; i++)
 		{
-			AProjectileBase* ProjectileObject = GetWorld()->SpawnActor<AProjectileBase>(PooledProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
-			if (ProjectileObject)
+			if (AProjectileBase* ProjectileObject = GetWorld()->SpawnActor<AProjectileBase>(PooledProjectileClass, SpawnLocation, SpawnRotation, SpawnParams))
 			{
 				ProjectilePools.Add(ProjectileObject);
 			}
@@ -44,7 +43,7 @@ void UProjectilePoolComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 void UProjectilePoolComponent::ActivateProjectile(const FVector& StartLocation, const FVector& Direction)
 {
 	AProjectileBase* ProjectileObject = ProjectilePools[PoolIndex];
-	CLog::Print(PoolIndex);
+
 	if (ProjectileObject && ProjectileObject->CanActivate())
 	{
 		ProjectileObject->Activate(StartLocation, Direction);

@@ -28,7 +28,6 @@ private:
 
 	void SetCollisionEnabled(ECollisionEnabled::Type InNewType);
 
-
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UBoxComponent> BoxComponent;
