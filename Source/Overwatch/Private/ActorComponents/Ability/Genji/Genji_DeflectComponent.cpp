@@ -18,4 +18,3 @@ void UGenji_DeflectComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 }
-

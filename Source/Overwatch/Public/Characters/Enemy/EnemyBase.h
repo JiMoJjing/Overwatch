@@ -4,6 +4,7 @@
 #include "Characters/CharacterBase.h"
 #include "EnemyBase.generated.h"
 
+class ADeflectCollider;
 class UWidgetComponent;
 
 UCLASS()
@@ -28,4 +29,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWidgetComponent> HPBarWidgetComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ADeflectCollider> DeflectColliderClass;
 };

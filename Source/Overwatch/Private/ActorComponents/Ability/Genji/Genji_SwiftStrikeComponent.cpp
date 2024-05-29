@@ -8,7 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "Characters/Player/Genji/Genji.h"
-#include "Colliders/SwiftStrikeCollider.h"
+#include "Colliders/Genji/SwiftStrikeCollider.h"
 
 #include "Utilities.h"
 
@@ -48,8 +48,8 @@ void UGenji_SwiftStrikeComponent::BeginPlay()
 			SwiftStrikeCollider = GetWorld()->SpawnActor<ASwiftStrikeCollider>(SwiftStrikeColliderClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
 			if (SwiftStrikeCollider)
 			{
-				FAttachmentTransformRules transformRules(EAttachmentRule::KeepRelative, true);
-				SwiftStrikeCollider->AttachToActor(PlayerBase, transformRules);
+				FAttachmentTransformRules TransformRules(EAttachmentRule::KeepRelative, true);
+				SwiftStrikeCollider->AttachToActor(PlayerBase, TransformRules);
 			}
 		}
 	}

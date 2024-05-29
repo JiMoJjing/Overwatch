@@ -170,8 +170,8 @@ void APlayerBase::StopMovement()
 
 void APlayerBase::CharacterDeath()
 {
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-	GetMesh()->SetSimulatePhysics(true);
+	// GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	// GetMesh()->SetSimulatePhysics(true);
 }
 
 UAbilityComponent* APlayerBase::GetAbilityComponent(EAbilityType InAbilityType) const
@@ -285,7 +285,6 @@ bool APlayerBase::TraceUnderCrosshair(const float TraceDistance, FHitResult& Out
 		if (UWorld* world = GetWorld())
 		{
 			world->LineTraceSingleByChannel(OutHitResult, TraceStartLocation, TraceEndLocation, InCollisionChannel);
-			
 		}
 		else
 		{

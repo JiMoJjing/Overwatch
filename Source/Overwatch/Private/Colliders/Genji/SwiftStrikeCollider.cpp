@@ -1,4 +1,4 @@
-#include "Colliders/SwiftStrikeCollider.h"
+#include "Colliders/Genji/SwiftStrikeCollider.h"
 #include "Components/BoxComponent.h"
 
 #include "Utilities.h"
@@ -28,19 +28,14 @@ void ASwiftStrikeCollider::Tick(float DeltaTime)
 
 }
 
-void ASwiftStrikeCollider::SwiftStrikeStarted()
+void ASwiftStrikeCollider::SwiftStrikeStarted() const	
 {
-	SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
-void ASwiftStrikeCollider::SwiftStrikeFinished()
+void ASwiftStrikeCollider::SwiftStrikeFinished() const
 {
-	SetCollisionEnabled(ECollisionEnabled::NoCollision);
-}
-
-void ASwiftStrikeCollider::SetCollisionEnabled(ECollisionEnabled::Type InNewType)
-{
-	BoxComponent->SetCollisionEnabled(InNewType);
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ASwiftStrikeCollider::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

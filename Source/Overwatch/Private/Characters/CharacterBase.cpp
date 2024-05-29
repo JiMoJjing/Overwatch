@@ -55,9 +55,6 @@ float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 			IApplyDamageSuccessHandler->Execute_ApplyDamageSuccess(EventInstigator->GetPawn(), Damage, bIsHeadShot);
 		}
 	}
-
-	FString str = FString::Printf(TEXT("%s Get Damaged : %f"), *this->GetName(), Damage);
-	CLog::Print(str, -1, 2.f, FColor::Red);
 	
 	return Damage;
 }

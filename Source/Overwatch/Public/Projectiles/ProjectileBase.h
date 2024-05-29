@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enums/TeamID.h"
 #include "GameFramework/Actor.h"
 #include "ProjectileBase.generated.h"
 
@@ -28,6 +29,9 @@ public:
 	UFUNCTION()
 	FORCEINLINE bool CanActivate() const { return bCanActivate; }
 
+	UFUNCTION()
+	virtual void Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction);
+
 protected:
 	UFUNCTION()
 	virtual void Deactivate();
@@ -37,6 +41,10 @@ protected:
 
 	UFUNCTION()
 	virtual void OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	void LifeSpanTimerRestart();
+
+	virtual void SetTeamCollisionSettings(ETeamID TeamID);
 
 protected:
 	// 벽 판정용 SphereComponent 인게임에서 여러 투사체들은 벽에대한 판정과 캐릭터에 대한 판정이 다르다.
@@ -70,4 +78,7 @@ protected:
 
 	UPROPERTY()
 	FTimerHandle LifeSpanTimerHandle;
+
+	UPROPERTY()
+	FName HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
 };

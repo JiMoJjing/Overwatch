@@ -23,6 +23,8 @@ public:
 	virtual void UseAbility() override;
 
 	void StartAutoAddUltimateGauge();
+
+	// 어차피 AddUltimateGauge에서 궁극기가 Active거나 이미 다 차있으면 얼리리턴하도록 되어있는데 필요한가?
 	void StopAutoAddUltimateGauge();
 
 	UFUNCTION(BlueprintCallable)

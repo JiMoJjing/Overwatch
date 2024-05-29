@@ -46,6 +46,8 @@ void UProjectilePoolComponent::ActivateProjectile(const FVector& StartLocation, 
 
 	if (ProjectileObject && ProjectileObject->CanActivate())
 	{
+		ProjectileObject->SetOwner(GetOwner());
+		ProjectileObject->SetInstigator(Cast<APawn>(GetOwner()));
 		ProjectileObject->Activate(StartLocation, Direction);
 		PoolIndex++;
 	}

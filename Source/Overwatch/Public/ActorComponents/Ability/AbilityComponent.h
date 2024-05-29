@@ -85,7 +85,7 @@ protected:
 	EAbilityType AbilityType;
 
 	// 현재 이 기술의 상태
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = EAbilityState))
 	uint8 AbilityState = 0;
 
 	// 캔슬 가능한 기술 목록

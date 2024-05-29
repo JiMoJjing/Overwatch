@@ -43,17 +43,20 @@ float UHPComponent::TakeDamage(float InDamageAmount)
 
 float UHPComponent::TakeHeal(float InHealAmount)
 {
+	if(MaxHP == CurrentHP)
+		return 0.f;
+	
 	float HealAmount = InHealAmount;
 
-	if(CurrentHP + InHealAmount >= MaxHP)
+	if(CurrentHP + HealAmount >= MaxHP)
 	{
-		InHealAmount = MaxHP - CurrentHP;
+		HealAmount = MaxHP - CurrentHP;
 		CurrentHP = MaxHP;
 	}
 
 	HPChanged();
 
-	return InHealAmount;
+	return HealAmount;
 }
 
 void UHPComponent::CharacterDeath() const

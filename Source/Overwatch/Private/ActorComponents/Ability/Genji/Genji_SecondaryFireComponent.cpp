@@ -61,7 +61,7 @@ void UGenji_SecondaryFireComponent::TripleShot()
 	{
 		FVector StartLocation = PlayerBase->GetMesh()->GetSocketLocation(FName(TEXT("ShurikenStart")));
 		FVector Direction;
-		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_Visibility))
+		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_GameTraceChannel9))
 		{
 			const FVector LeftDirection = Direction.RotateAngleAxis(-Angle, FVector::UpVector);
 			const FVector RightDirection = Direction.RotateAngleAxis(Angle, FVector::UpVector);

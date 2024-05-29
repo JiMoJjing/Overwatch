@@ -4,6 +4,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "Utilities.h"
+#include "Characters/CharacterBase.h"
 
 AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
 {
@@ -11,8 +12,8 @@ AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
 
 	HitSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("HitSphereComponent"));
 	SetRootComponent(HitSphereComponent);
-
-	HitSphereComponent->SetCollisionProfileName(FName(TEXT("Team1Collider")));
+	
+	HitSphereComponent->SetGenerateOverlapEvents(false);
 	HitSphereComponent->SetSphereRadius(1.f);
 
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
@@ -25,10 +26,9 @@ void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//HitSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &AProjectileBase::OnHitSphereBeginOverlap);
-	HitSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
+	SetTeamCollisionSettings(Cast<ACharacterBase>(GetOwner())->GetTeamID());
 	
-
+	HitSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
 	HitSphereComponent->SetSphereRadius(HitSphereRadius);
 	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -36,7 +36,6 @@ void AProjectileBase::BeginPlay()
 	ProjectileMovementComponent->MaxSpeed = ProjectileMaxSpeed;
 	ProjectileMovementComponent->ProjectileGravityScale = ProjectileGravityScale;
 	ProjectileMovementComponent->SetActive(false);
-	
 }
 
 void AProjectileBase::Tick(float DeltaTime)
@@ -46,12 +45,14 @@ void AProjectileBase::Tick(float DeltaTime)
 
 void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Direction)
 {
+	SetTeamCollisionSettings(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	
 	SetActorLocation(StartLocation);
 	SetActorRotation(Direction.Rotation());
 	
 	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-	ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->InitialSpeed;
+	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
 	ProjectileMovementComponent->SetActive(true);
 	
 	NiagaraComponent->Activate(true);
@@ -70,13 +71,10 @@ void AProjectileBase::Deactivate()
 	{
 		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
 	}
-
-	SetActorLocation(FVector::ZeroVector);
 	
 	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ProjectileMovementComponent->SetActive(false);
 	NiagaraComponent->Deactivate();
-
 	
 	bCanActivate = true;
 }
@@ -89,5 +87,49 @@ void AProjectileBase::OnHitSphereBeginOverlap(UPrimitiveComponent* OverlappedCom
 void AProjectileBase::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Deactivate();
+}
+
+void AProjectileBase::Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction)
+{
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
+	SetActorRotation(Direction.Rotation());
+
+	SetTeamCollisionSettings(Cast<ACharacterBase>(NewOwner)->GetTeamID());
+
+	LifeSpanTimerRestart();
+	
+	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
+}
+
+void AProjectileBase::LifeSpanTimerRestart()
+{
+	if (GetWorldTimerManager().IsTimerActive(LifeSpanTimerHandle))
+	{
+		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
+	}
+	
+	if (LifeSpan != 0.0f)
+	{
+		GetWorldTimerManager().SetTimer(LifeSpanTimerHandle, this, &AProjectileBase::Deactivate, LifeSpan, false);
+	}
+}
+
+void AProjectileBase::SetTeamCollisionSettings(ETeamID TeamID)
+{
+	switch (TeamID)
+	{
+	case ETeamID::ETI_Team1:
+		HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
+		break;
+	case ETeamID::ETI_Team2:
+		HitSphereCollisionProfileName = FName(TEXT("Team2ProjectileHit"));
+		break;
+	default:
+		HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
+		break;
+	}
+	
+	HitSphereComponent->SetCollisionProfileName(HitSphereCollisionProfileName);
 }
 

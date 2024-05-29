@@ -42,7 +42,6 @@ void UUltimateAbilityComponent::ResetGauge()
 	UltimateGauge = 0.f;
 	UltimateGaugeChanged(0.f);
 	Super::DeactivateAbility();
-	StartAutoAddUltimateGauge();
 }
 
 void UUltimateAbilityComponent::StartAutoAddUltimateGauge()
@@ -83,7 +82,6 @@ void UUltimateAbilityComponent::AddUltimateGauge(float InAmount)
 	{
 		UltimateGauge = MaxUltimateGauge;
 		bUltimateAvailable = true;
-		StopAutoAddUltimateGauge();
 	}
 	else
 	{

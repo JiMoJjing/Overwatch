@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enums/TeamID.h"
 #include "GameFramework/Character.h"
 #include "CharacterBase.generated.h"
 
@@ -30,9 +31,16 @@ public:
 	// 캐릭터가 죽으면 실행할 함수. 주로 HPComponent에서 HP가 0이되면 실행 오버라이드해서 사용할 것
 	virtual void CharacterDeath();
 
+	// TeamID Getter
+	UFUNCTION()
+	FORCEINLINE ETeamID GetTeamID() const{ return TeamID; }
+
 	// 체력 관리하는 액터 컴포넌트
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UHPComponent> HPComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	ETeamID TeamID = ETeamID::ETI_Team1;
 	
 };

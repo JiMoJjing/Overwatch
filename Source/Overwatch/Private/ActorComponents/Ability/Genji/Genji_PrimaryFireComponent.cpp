@@ -74,7 +74,7 @@ void UGenji_PrimaryFireComponent::SingleShot()
 	{
 		FVector StartLocation = PlayerBase->GetMesh()->GetSocketLocation(FName(TEXT("ShurikenStart")));
 		FVector Direction;
-		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_Visibility))
+		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_GameTraceChannel9))
 		{
 			ProjectilePoolComponent->ActivateProjectile(StartLocation, Direction);
 			AmmoComponent->ConsumeAmmo(1);
