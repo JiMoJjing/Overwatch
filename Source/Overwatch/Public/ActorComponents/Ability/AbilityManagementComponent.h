@@ -6,8 +6,8 @@
 #include "Enums/AbilityState.h"
 #include "AbilityManagementComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityActivated, EAbilityType, InAbilityType);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityDeactivated, EAbilityType, InAbilityType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityStarted, EAbilityType, InAbilityType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAbilityFinished, EAbilityType, InAbilityType);
 
 class UAbilityComponent;
 
@@ -28,29 +28,25 @@ public:
 public:
 	// 기술 사용중이면 기술의 타입, 사용중인 기술이 없으면 EAbilityType::EAT_None 반환
 	UFUNCTION(BlueprintCallable)
-	EAbilityType GetAbilityType() { return ActiveAbilityType; }
+	EAbilityType GetActiveAbilityType() { return ActiveAbilityType; }
 
 	// 현재 기술 사용중이면 true, 없으면 false
-	FORCEINLINE bool IsAbilityActivate() { return ActiveAbilityType != EAbilityType::EAT_None; }
+	FORCEINLINE bool IsAbilityActive() { return ActiveAbilityType != EAbilityType::EAT_None; }
 
-	void ActivateAbility(EAbilityType InAbilityType);
-	void DeactivateAbility(EAbilityType InAbilityType);
-
+	void NotifyAbilityStart(EAbilityType InAbilityType);
+	void NotifyAbilityFinish(EAbilityType InAbilityType);
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnAbilityStarted OnAbilityStarted;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnAbilityActivated OnAbilityActivated;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnAbilityDeactivated OnAbilityDeactivated;
+	FOnAbilityFinished OnAbilityFinished;
 
 private:
-	void AbilityActivated(EAbilityType InAbilityType);
+	void AbilityStarted(EAbilityType InAbilityType);
 
-	void AbilityDeactivated(EAbilityType InAbilityType);
+	void AbilityFinished(EAbilityType InAbilityType);
 
 private:
-	UPROPERTY()
-	TObjectPtr<UAbilityComponent> ActiveAbilityComponent;
-
 	EAbilityType ActiveAbilityType;
 };

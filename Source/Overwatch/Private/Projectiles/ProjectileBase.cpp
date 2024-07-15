@@ -4,6 +4,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "Utilities.h"
+#include "ActorComponents/Ability/ProjectileAmmoComponent.h"
 #include "Characters/CharacterBase.h"
 
 AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
@@ -18,6 +19,7 @@ AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
 
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
 	NiagaraComponent->SetupAttachment(HitSphereComponent);
+	NiagaraComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 }
@@ -26,7 +28,10 @@ void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetTeamCollisionSettings(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	if(GetOwner())
+	{
+		SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	}
 	
 	HitSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
 	HitSphereComponent->SetSphereRadius(HitSphereRadius);
@@ -36,6 +41,9 @@ void AProjectileBase::BeginPlay()
 	ProjectileMovementComponent->MaxSpeed = ProjectileMaxSpeed;
 	ProjectileMovementComponent->ProjectileGravityScale = ProjectileGravityScale;
 	ProjectileMovementComponent->SetActive(false);
+
+	NiagaraComponent->SetVisibility(false);
+	NiagaraComponent->Deactivate();
 }
 
 void AProjectileBase::Tick(float DeltaTime)
@@ -44,9 +52,7 @@ void AProjectileBase::Tick(float DeltaTime)
 }
 
 void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Direction)
-{
-	SetTeamCollisionSettings(Cast<ACharacterBase>(GetOwner())->GetTeamID());
-	
+{	
 	SetActorLocation(StartLocation);
 	SetActorRotation(Direction.Rotation());
 	
@@ -56,13 +62,12 @@ void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Dire
 	ProjectileMovementComponent->SetActive(true);
 	
 	NiagaraComponent->Activate(true);
+	NiagaraComponent->SetVisibility(true);
 	
 	if (LifeSpan != 0.0f)
 	{
 		GetWorldTimerManager().SetTimer(LifeSpanTimerHandle, this, &AProjectileBase::Deactivate, LifeSpan, false);
 	}
-	
-	bCanActivate = false;
 }
 
 void AProjectileBase::Deactivate()
@@ -71,17 +76,25 @@ void AProjectileBase::Deactivate()
 	{
 		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
 	}
-	
+	if(Cast<APawn>(GetOwner()) != GetInstigator())
+	{
+		SetInstigator(Cast<APawn>(GetOwner()));
+	}
+	SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
 	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ProjectileMovementComponent->SetActive(false);
+	NiagaraComponent->SetVisibility(false);
 	NiagaraComponent->Deactivate();
-	
-	bCanActivate = true;
+
+	if(ProjectileAmmoComponent.IsValid())
+	{
+		ProjectileAmmoComponent->DeactivateProjectile(this);
+	}
 }
 
 void AProjectileBase::OnHitSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	Deactivate();
+	//Deactivate();
 }
 
 void AProjectileBase::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -89,17 +102,24 @@ void AProjectileBase::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* Oth
 	Deactivate();
 }
 
-void AProjectileBase::Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction)
+void AProjectileBase::Deflected(APawn* NewInstigator, const FVector& Direction)
 {
-	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	SetActorRotation(Direction.Rotation());
-
-	SetTeamCollisionSettings(Cast<ACharacterBase>(NewOwner)->GetTeamID());
-
+	
+	SetCollisionProfileByTeam(Cast<ACharacterBase>(NewInstigator)->GetTeamID());
+	
 	LifeSpanTimerRestart();
 	
 	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
+}
+
+void AProjectileBase::SetProjectileAmmoComponent(UProjectileAmmoComponent* InComponent)
+{
+	if(InComponent)
+	{
+		ProjectileAmmoComponent = InComponent;
+	}
 }
 
 void AProjectileBase::LifeSpanTimerRestart()
@@ -115,7 +135,7 @@ void AProjectileBase::LifeSpanTimerRestart()
 	}
 }
 
-void AProjectileBase::SetTeamCollisionSettings(ETeamID TeamID)
+void AProjectileBase::SetCollisionProfileByTeam(ETeamID TeamID)
 {
 	switch (TeamID)
 	{
@@ -126,7 +146,6 @@ void AProjectileBase::SetTeamCollisionSettings(ETeamID TeamID)
 		HitSphereCollisionProfileName = FName(TEXT("Team2ProjectileHit"));
 		break;
 	default:
-		HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
 		break;
 	}
 	

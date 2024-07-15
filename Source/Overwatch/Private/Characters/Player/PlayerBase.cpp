@@ -12,9 +12,10 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "ActorComponents/Ability/AbilityManagementComponent.h"
-#include "ActorComponents/Ability/AmmoComponent.h"
 #include "ActorComponents/Ability/UltimateAbilityComponent.h"
+#include "ActorComponents/Ability/AmmoComponent.h"
 
+#include "Controllers/OverwatchPlayerController.h"
 #include "Utilities.h"
 
 APlayerBase::APlayerBase()
@@ -59,7 +60,6 @@ APlayerBase::APlayerBase()
 	GetMesh()->SetCollisionProfileName(FName(TEXT("Team1Mesh")));
 
 	AbilityManagementComponent = CreateDefaultSubobject<UAbilityManagementComponent>(TEXT("AbilityManagementComponent"));
-	AmmoComponent = CreateDefaultSubobject<UAmmoComponent>(TEXT("AmmoComponent"));
 }
 
 void APlayerBase::BeginPlay()
@@ -170,8 +170,16 @@ void APlayerBase::StopMovement()
 
 void APlayerBase::CharacterDeath()
 {
-	// GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-	// GetMesh()->SetSimulatePhysics(true);
+	
+}
+
+void APlayerBase::NotifyCharacterDeath(AController* EventInstigator, AActor* DamageCauser, bool bIsHeadShot)
+{
+	if(AOverwatchPlayerController* OverwatchPlayerController = Cast<AOverwatchPlayerController>(GetController()))
+	{
+		CLog::Print(TEXT("Death!"));
+		OverwatchPlayerController->ReceiveCharacterDeath(EventInstigator, DamageCauser, bIsHeadShot);
+	}
 }
 
 UAbilityComponent* APlayerBase::GetAbilityComponent(EAbilityType InAbilityType) const
@@ -231,7 +239,8 @@ void APlayerBase::SecondaryFire()
 void APlayerBase::Reloading()
 {
 	CLog::Print(TEXT("Reloading Pressed"));
-	if (AmmoComponent)
+	
+	if(AmmoComponent)
 	{
 		AmmoComponent->UseAbility();
 	}

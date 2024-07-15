@@ -19,13 +19,16 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction) override;
+	virtual void Deflected(APawn* NewInstigator, const FVector& Direction) override;
 
 protected:
 	UFUNCTION()
 	virtual void OnOverlapSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	virtual void SetTeamCollisionSettings(ETeamID TeamID) override;
+	virtual void SetCollisionProfileByTeam(ETeamID TeamID) override;
+
+	virtual void Activate(const FVector& StartLocation, const FVector& Direction) override;
+	virtual void Deactivate() override;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
@@ -34,8 +37,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	float OverlapSphereRadius = 10.f;
 
-	UPROPERTY()
-	FName OverlapSphereCollisionProfileName = FName(TEXT("Team1ProjectileOverlap"));
-
-	ETraceTypeQuery TraceTypeQuery = TraceTypeQuery3;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess));
+	TEnumAsByte<ETraceTypeQuery> TraceTypeQuery = TraceTypeQuery3;
+	
 };

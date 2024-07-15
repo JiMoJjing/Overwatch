@@ -49,6 +49,7 @@ public:
 	virtual void StopMovement();
 
 	virtual void CharacterDeath() override;
+	virtual void NotifyCharacterDeath(AController* EventInstigator, AActor* DamageCauser, bool bIsHeadShot) override;
 	
 	/** Getter */
 	UFUNCTION()
@@ -138,10 +139,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilityManagementComponent> AbilityManagementComponent;
 
-	/** 탄창 수 관리 및 Reload 동작 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAmmoComponent> AmmoComponent;
-
 	// 하위 클래스에서 Create할 것
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilityComponent> PrimaryFireComponent;
@@ -160,6 +157,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilityComponent> QuickMeleeComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAmmoComponent> AmmoComponent;
 	
 private:
 	/** MappingContext */

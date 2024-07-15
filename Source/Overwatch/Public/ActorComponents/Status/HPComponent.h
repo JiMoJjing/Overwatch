@@ -20,9 +20,10 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	float TakeDamage(float InDamageAmount);
+	float TakeDamage(float InDamageAmount, bool& IsDeath);
 	float TakeHeal(float InHealAmount);
 	void CharacterDeath() const;
+	void CharacterRevive();
 	void HPChanged() const;
 
 public:

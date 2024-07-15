@@ -22,8 +22,6 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	virtual void UseAbility() override;
-
 	// Montage NotifyTick 에서 호출되는 질풍참 방향 업데이트 함수
 	UFUNCTION()
 	void SwiftStrikeUpdate(float DeltaTime);
@@ -34,14 +32,10 @@ public:
 
 protected:
 	// AbilityManagement에 기술 활성화, 비활성화 하는 함수 override
-	virtual void ActivateAbility() override;
-	virtual void DeactivateAbility() override;
+	virtual void StartAbility() override;
+	virtual void FinishAbility() override;
 
 private:
-	// 질풍참 시작
-	void SwiftStrikeStarted();
-	// 질풍참 마무리
-	//void SwiftStrikeFinished();
 	// 질풍참 시작 위치 설정
 	void SetSwiftStrikeStartLocation();
 	// 질풍참 도착 위치 설정
@@ -67,22 +61,15 @@ private:
 	UFUNCTION()
 	void SwiftStrikeCapsuleSizeTimelineFinished();
 
-	// 질풍참 몽타주가 캔슬되었을 때
-	UFUNCTION()
-	void SwiftStrikeMontageInterrupted(UAnimMontage* Montage, bool bInterrupted);
-
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	float TimeDilationValue;
+	UPROPERTY()
+	TObjectPtr<AGenji> GenjiRef;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	float SwiftStrikeDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	float SwiftStrikeSpeed;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UAnimMontage* SwiftStrikeMontage;
 
 	FVector SwiftStrikeStartLocation = FVector::ZeroVector;
 
@@ -90,12 +77,10 @@ private:
 
 	FVector SwiftStrikeHitNormalProjection = FVector::ZeroVector;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	float HitNormalProjectionInterpSpeed = 10.f;
-
-	bool bSwiftStrike;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCurveFloat> SwiftStrikeCapsuleSizeCurveFloat;
 
 	UPROPERTY()
@@ -107,18 +92,17 @@ private:
 	UPROPERTY()
 	FTimeline SwiftStrikeCapsuleSizeTimeline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	FVector2D CapsuleSize2D;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	FVector2D SwiftStrikeCapsuleSize2D;
 
-	UPROPERTY()
-	uint32 JumpCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class ASwiftStrikeCollider> SwiftStrikeColliderClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ASwiftStrikeCollider> SwiftStrikeColliderClass;
 
 	UPROPERTY()
 	TObjectPtr<ASwiftStrikeCollider> SwiftStrikeCollider;
+	
+	bool bSwiftStrike;
 };

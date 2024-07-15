@@ -30,4 +30,3 @@ FORCEINLINE static void SubAbilityState(uint8& AbilityState, EAbilityState InAbi
 {
     AbilityState &= ~static_cast<uint8>(InAbilityState);
 }
-

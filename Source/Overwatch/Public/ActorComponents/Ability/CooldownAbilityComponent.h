@@ -4,7 +4,7 @@
 #include "AbilityComponent.h"
 #include "CooldownAbilityComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCooldownTimeChanged, float, InCooldownTime, float, InCooldownDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCooldownTimeChanged, float, RemainingCooldownTime, float, CooldownTime);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class OVERWATCH_API UCooldownAbilityComponent : public UAbilityComponent
@@ -20,36 +20,37 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void AbilityWidgetInit() override;
+
+	UFUNCTION()
+	void CooldownReset();
+	
 protected:
 	// Cooldown 시작
 	virtual void CooldownStart();
-	
 	// bHasCooldownWidget이 true면 SetTimer에서 호출 될 함수 ( 0.1초 간격 )
-	virtual void CooldownTimerTick();
-
+	virtual void CooldownTick();
 	// bHasCooldownWidget이 false면 SetTimer에서 호출 or CooldownTimerTick에서 NowCooldownTime이 0이되면 호출
 	virtual void CooldownEnd();
 
 	// CooldownWidget 사용 시 Delegate Broadcast 하는 함수 
-	void CooldownTimeChanged(const float InNowCooldownTime);
+	void CooldownTimeChanged(const float InRemainingCooldownTime) const;
 
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnCooldownTimeChanged OnCooldownTimeChanged;
 
 protected:
-	// 쿨다운 위젯 사용 여부
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cooldown", meta = (AllowPrivateAccess = "true"))
-	bool bHasCooldownWidget = false;
-
 	// 쿨다운 시간
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cooldown", meta = (AllowPrivateAccess = "true"))
-	float CooldownDuration;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Cooldown", meta = (AllowPrivateAccess = "true"))
+	float CooldownTime;
 
 	// 쿨다운 TimerHandle
 	UPROPERTY()
 	FTimerHandle CooldownTimerHandle;
 
 	// 현재 쿨타임
-	float NowCooldownTime;
+	float RemainingCooldownTime;
+
+	bool bReset = false;
 };

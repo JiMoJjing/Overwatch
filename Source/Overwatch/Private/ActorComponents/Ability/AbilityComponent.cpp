@@ -12,12 +12,11 @@ UAbilityComponent::UAbilityComponent()
 void UAbilityComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	PlayerBase = Cast<APlayerBase>(GetOwner());
 
-	if (PlayerBase)
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
 		AbilityManagementComponent = PlayerBase->GetAbilityManagementComponent();
+		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UAbilityComponent::OnMontageInterrupted);
 	}
 	else
 	{
@@ -26,11 +25,12 @@ void UAbilityComponent::BeginPlay()
 
 	if (AbilityManagementComponent)
 	{
-		AbilityManagementComponent->OnAbilityActivated.AddDynamic(this, &UAbilityComponent::OnAbilityActivated);
-		AbilityManagementComponent->OnAbilityDeactivated.AddDynamic(this, &UAbilityComponent::OnAbilityDeactivated);
+		AbilityManagementComponent->OnAbilityStarted.AddDynamic(this, &UAbilityComponent::OnOtherAbilityStarted);
+		AbilityManagementComponent->OnAbilityFinished.AddDynamic(this, &UAbilityComponent::OnOtherAbilityFinished);
 	}
 
 	AddAbilityState(AbilityState, EAbilityState::EAS_Available);
+	AbilityStateChanged();
 }
 
 void UAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,15 +41,17 @@ void UAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 void UAbilityComponent::UseAbility()
 {
-	if(CanActivateAbility())
+	if(CanUseAbility())
 	{
-		ActivateAbility();
+		StartAbility();
 	}
 }
 
-bool UAbilityComponent::CanActivateAbility()
+bool UAbilityComponent::CanUseAbility()
 {
-	bool bAvailable = IsAbilityState(AbilityState, EAbilityState::EAS_Available) && IsNotAbilityState(AbilityState, EAbilityState::EAS_Active) && IsNotAbilityState(AbilityState, EAbilityState::EAS_Cooldown);
+	bool bAvailable = IsAbilityState(AbilityState, EAbilityState::EAS_Available);
+	bAvailable &= IsNotAbilityState(AbilityState, EAbilityState::EAS_Active);
+	bAvailable &= IsNotAbilityState(AbilityState, EAbilityState::EAS_Cooldown);
 	bAvailable &= CanCancelAbility();
 
 	return bAvailable;
@@ -57,32 +59,32 @@ bool UAbilityComponent::CanActivateAbility()
 
 bool UAbilityComponent::CanCancelAbility()
 {
-	EAbilityType NowAbilityType = AbilityManagementComponent->GetAbilityType();
+	EAbilityType NowAbilityType = AbilityManagementComponent->GetActiveAbilityType();
 
 	return (NowAbilityType == EAbilityType::EAT_None) || (CancelableAbilityTypes & static_cast<uint8>(NowAbilityType));
 }
 
-void UAbilityComponent::ActivateAbility()
+void UAbilityComponent::StartAbility()
 {
 	if (AbilityManagementComponent)
 	{
-		AbilityManagementComponent->ActivateAbility(AbilityType);
+		AbilityManagementComponent->NotifyAbilityStart(AbilityType);
 	}
 	AddAbilityState(AbilityState, EAbilityState::EAS_Active);
 	AbilityStateChanged();
 }
 
-void UAbilityComponent::DeactivateAbility()
+void UAbilityComponent::FinishAbility()
 {
 	if (AbilityManagementComponent)
 	{
-		AbilityManagementComponent->DeactivateAbility(AbilityType);
+		AbilityManagementComponent->NotifyAbilityFinish(AbilityType);
 	}
 	SubAbilityState(AbilityState, EAbilityState::EAS_Active);
 	AbilityStateChanged();
 }
 
-void UAbilityComponent::OnAbilityActivated(EAbilityType InAbilityType)
+void UAbilityComponent::OnOtherAbilityStarted(EAbilityType InAbilityType)
 {
 	if (MakeUnavailableAbilityTypes & static_cast<uint8>(InAbilityType))
 	{
@@ -91,7 +93,7 @@ void UAbilityComponent::OnAbilityActivated(EAbilityType InAbilityType)
 	}
 }
 
-void UAbilityComponent::OnAbilityDeactivated(EAbilityType InAbilityType)
+void UAbilityComponent::OnOtherAbilityFinished(EAbilityType InAbilityType)
 {
 	if (MakeUnavailableAbilityTypes & static_cast<uint8>(InAbilityType))
 	{
@@ -105,6 +107,14 @@ void UAbilityComponent::AbilityStateChanged() const
 	if(OnAbilityStateChanged.IsBound())
 	{
 		OnAbilityStateChanged.Broadcast(AbilityState);
+	}
+}
+
+void UAbilityComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
+{
+	if(AbilityMontage == Montage && bInterrupted)
+	{
+		FinishAbility();
 	}
 }
 

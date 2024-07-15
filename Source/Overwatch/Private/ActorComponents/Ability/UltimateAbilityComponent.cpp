@@ -26,14 +26,14 @@ void UUltimateAbilityComponent::UseAbility()
 {
 	if(bUltimateAvailable)
 	{
-		ActivateAbility();
+		StartAbility();
 		bUltimateAvailable = false;
 	}
 }
 
-void UUltimateAbilityComponent::ActivateAbility()
+void UUltimateAbilityComponent::StartAbility()
 {
-	Super::ActivateAbility();
+	Super::StartAbility();
 	ResetGauge();
 }
 
@@ -41,7 +41,7 @@ void UUltimateAbilityComponent::ResetGauge()
 {
 	UltimateGauge = 0.f;
 	UltimateGaugeChanged(0.f);
-	Super::DeactivateAbility();
+	Super::FinishAbility();
 }
 
 void UUltimateAbilityComponent::StartAutoAddUltimateGauge()

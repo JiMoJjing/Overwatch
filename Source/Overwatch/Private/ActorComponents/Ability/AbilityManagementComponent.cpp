@@ -6,7 +6,6 @@
 UAbilityManagementComponent::UAbilityManagementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	ActiveAbilityComponent = nullptr;
 }
 
 void UAbilityManagementComponent::BeginPlay()
@@ -20,36 +19,34 @@ void UAbilityManagementComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 }
 
-void UAbilityManagementComponent::ActivateAbility(EAbilityType InAbilityType)
+void UAbilityManagementComponent::NotifyAbilityStart(EAbilityType InAbilityType)
 {
 	ActiveAbilityType = InAbilityType;
-	AbilityActivated(ActiveAbilityType);
+	AbilityStarted(ActiveAbilityType);
 }
 
-void UAbilityManagementComponent::DeactivateAbility(EAbilityType InAbilityType)
+void UAbilityManagementComponent::NotifyAbilityFinish(EAbilityType InAbilityType)
 {
-	AbilityDeactivated(InAbilityType);
+	AbilityFinished(InAbilityType);
 	if (ActiveAbilityType == InAbilityType)
 	{
 		ActiveAbilityType = EAbilityType::EAT_None;
 	}
 }
 
-void UAbilityManagementComponent::AbilityActivated(EAbilityType InAbilityType)
+void UAbilityManagementComponent::AbilityStarted(EAbilityType InAbilityType)
 {
-	if (OnAbilityActivated.IsBound())
+	if (OnAbilityStarted.IsBound())
 	{
-		OnAbilityActivated.Broadcast(InAbilityType);
-		/*FString str = StaticEnum<EAbilityType>()->GetValueAsString(InAbilityType);
-		CLog::Print(str);*/
+		OnAbilityStarted.Broadcast(InAbilityType);
 	}
 }
 
-void UAbilityManagementComponent::AbilityDeactivated(EAbilityType InAbilityType)
+void UAbilityManagementComponent::AbilityFinished(EAbilityType InAbilityType)
 {
-	if (OnAbilityDeactivated.IsBound())
+	if (OnAbilityFinished.IsBound())
 	{
-		OnAbilityDeactivated.Broadcast(InAbilityType);
+		OnAbilityFinished.Broadcast(InAbilityType);
 	}
 }
 

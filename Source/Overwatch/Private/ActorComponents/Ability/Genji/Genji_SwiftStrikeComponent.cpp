@@ -13,33 +13,33 @@
 #include "Utilities.h"
 
 
-UGenji_SwiftStrikeComponent::UGenji_SwiftStrikeComponent() : TimeDilationValue(0.2f), SwiftStrikeDistance(1884.f), SwiftStrikeSpeed(5000.f), bSwiftStrike(false), CapsuleSize2D(42.f, 96.f)
-, SwiftStrikeCapsuleSize2D(21.f, 48.f)
+UGenji_SwiftStrikeComponent::UGenji_SwiftStrikeComponent() :  SwiftStrikeDistance(1884.f), SwiftStrikeSpeed(5000.f),  CapsuleSize2D(42.f, 96.f)
+, SwiftStrikeCapsuleSize2D(21.f, 48.f), bSwiftStrike(false)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
 	SwiftStrikeCollider = nullptr;
-	PlayerBase = nullptr;
 
 	OnSwiftStrikeCapsuleSizeTimelineUpdate.BindUFunction(this, FName("SwiftStrikeCapsuleSizeTimelineUpdate"));
 	OnSwiftStrikeCapsuleSizeTimelineFinished.BindUFunction(this, FName("SwiftStrikeCapsuleSizeTimelineFinished"));
+	
+	CooldownTime = 8.f;
 }
 
 void UGenji_SwiftStrikeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerBase = Cast<AGenji>(GetOwner());
-	if (PlayerBase)
+	GenjiRef = Cast<AGenji>(GetOwner());
+	
+	if (GenjiRef)
 	{
-		PlayerBase->GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &UGenji_SwiftStrikeComponent::OnSwiftStrikeComponentHit);
-		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UGenji_SwiftStrikeComponent::SwiftStrikeMontageInterrupted);
-		
-		PlayerBase->GetCharacterMovement()->MaxFlySpeed = SwiftStrikeSpeed;
+		GenjiRef->GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &UGenji_SwiftStrikeComponent::OnSwiftStrikeComponentHit);
+		GenjiRef->GetCharacterMovement()->MaxFlySpeed = SwiftStrikeSpeed;
 
 		FActorSpawnParameters ActorSpawnParams;
-		ActorSpawnParams.Owner = PlayerBase;
-		ActorSpawnParams.Instigator = PlayerBase;
+		ActorSpawnParams.Owner = GenjiRef;
+		ActorSpawnParams.Instigator = GenjiRef;
 
 		FVector SpawnLocation = FVector::ZeroVector;
 		FRotator SpawnRotation = FRotator::ZeroRotator;
@@ -49,7 +49,7 @@ void UGenji_SwiftStrikeComponent::BeginPlay()
 			if (SwiftStrikeCollider)
 			{
 				FAttachmentTransformRules TransformRules(EAttachmentRule::KeepRelative, true);
-				SwiftStrikeCollider->AttachToActor(PlayerBase, TransformRules);
+				SwiftStrikeCollider->AttachToActor(GenjiRef, TransformRules);
 			}
 		}
 	}
@@ -68,68 +68,37 @@ void UGenji_SwiftStrikeComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	SwiftStrikeCapsuleSizeTimeline.TickTimeline(DeltaTime);
 }
 
-void UGenji_SwiftStrikeComponent::UseAbility()
+void UGenji_SwiftStrikeComponent::StartAbility()
 {
-	Super::UseAbility();
+	Super::StartAbility();
+	
+	if (GenjiRef && AbilityMontage)
+	{
+		SwiftStrikeStartSetting();
+		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
+	}
 }
 
-void UGenji_SwiftStrikeComponent::ActivateAbility()
+void UGenji_SwiftStrikeComponent::FinishAbility()
 {
-	Super::ActivateAbility();
-	SwiftStrikeStarted();
-}
-
-void UGenji_SwiftStrikeComponent::DeactivateAbility()
-{
-	Super::DeactivateAbility();
+	Super::FinishAbility();
 	SwiftStrikeFinishSetting();
 	CooldownStart();
 }
 
-void UGenji_SwiftStrikeComponent::SwiftStrikeStarted()
-{
-	SwiftStrikeStartSetting();
-
-	if (SwiftStrikeMontage && PlayerBase)
-	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(SwiftStrikeMontage);
-	}
-	else
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrike PlayerBase or SwiftStrikeMontage nullptr"));
-	}
-}
-
-//void USwiftStrikeComponent::SwiftStrikeFinished()
-//{
-//	DeactivateAbility();
-//}
-
 void UGenji_SwiftStrikeComponent::SetSwiftStrikeStartLocation()
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SetSwiftStrikeStartLocation PlayerBase nullptr"));
-		return;
-	}
-
 	// SwiftStrikeStartLocation 설정
-	SwiftStrikeStartLocation = PlayerBase->GetActorLocation();
+	SwiftStrikeStartLocation = GenjiRef->GetActorLocation();
 }
 
 void UGenji_SwiftStrikeComponent::SetSwiftStrikeEndLocation()
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SetSwiftStrikeEndLocation PlayerBase nullptr"));
-		return;
-	}
-
 	FHitResult HitResult;
 	FVector TraceEndLocation;
 
 	// 진행 방향으로 사거리 길이 만큼 LineTrace 진행
-	bool bLineTraceSuccess = PlayerBase->TraceUnderCrosshair(SwiftStrikeDistance, HitResult, TraceEndLocation, ECollisionChannel::ECC_Camera);
+	bool bLineTraceSuccess = GenjiRef->TraceUnderCrosshair(SwiftStrikeDistance, HitResult, TraceEndLocation, ECollisionChannel::ECC_Camera);
 
 	// 지형 감지시 SwiftStrikeEndLocation 을 HitResult의 Location으로 설정, 실패 시 traceEndLocation으로 설정
 	if (bLineTraceSuccess)
@@ -146,7 +115,7 @@ void UGenji_SwiftStrikeComponent::SetSwiftStrikeEndLocation()
 
 	// Draw Debug
 	DrawDebugSphere(GetWorld(), SwiftStrikeEndLocation, 10.f, 20, FColor::Green, false, 5.f, 0U, 1.f);
-	DrawDebugLine(GetWorld(), PlayerBase->GetActorLocation(), SwiftStrikeEndLocation, FColor::Green, false, 5.f, 0U, 1.f);
+	DrawDebugLine(GetWorld(), GenjiRef->GetActorLocation(), SwiftStrikeEndLocation, FColor::Green, false, 5.f, 0U, 1.f);
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
@@ -154,12 +123,6 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
 	// 시작점, 도착점 세팅
 	SetSwiftStrikeStartLocation();
 	SetSwiftStrikeEndLocation();
-
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeStartSetting PlayerBase nullptr"));
-		return;
-	}
 
 	bSwiftStrike = true;
 
@@ -170,82 +133,60 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
 	}
 
 	// 캡슐 사이즈 조정
-	PlayerBase->GetCapsuleComponent()->SetCapsuleSize(SwiftStrikeCapsuleSize2D.X, SwiftStrikeCapsuleSize2D.Y);
+	GenjiRef->GetCapsuleComponent()->SetCapsuleSize(SwiftStrikeCapsuleSize2D.X, SwiftStrikeCapsuleSize2D.Y);
 
 	// 캡슐 콜리전이 적 캡슐 콜리전을 무시하도록 하기
-	PlayerBase->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
+	GenjiRef->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Ignore);
 
 	// 질풍참 동안 Input 무시
-	AController* Controller = PlayerBase->GetController();
-	if (Controller)
+	if (AController* Controller = GenjiRef->GetController())
 	{
 		Controller->SetIgnoreMoveInput(true);
 		Controller->SetIgnoreLookInput(true);
 	}
-	else
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeStartSetting Controller nullptr"));
-	}
-
-	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), TimeDilationValue);
-
+		
 	// MovementMode Flying 설정
-	PlayerBase->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
+	GenjiRef->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 	// 최대 가속도 큰 값 -> Velocity 0에서 5000으로 급가속
-	PlayerBase->GetCharacterMovement()->MaxAcceleration = 1000000.f;
+	GenjiRef->GetCharacterMovement()->MaxAcceleration = 1000000.f;
 
 	// 질풍참 콜라이더 콜리전 On
 	if (SwiftStrikeCollider)
 	{
-		SwiftStrikeCollider->SwiftStrikeStarted();
-	}
-	else
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeStartSetting SwiftStrikeCollider nullptr"));
+		SwiftStrikeCollider->Activate();
 	}
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeFinishSetting()
 {
-	if (PlayerBase == nullptr)
+	if (GenjiRef->GetMesh()->GetAnimInstance()->Montage_IsPlaying(AbilityMontage))
 	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeFinished PlayerBase nullptr"));
-		return;
-	}
-
-	if (PlayerBase->GetMesh()->GetAnimInstance()->Montage_IsPlaying(SwiftStrikeMontage))
-	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, SwiftStrikeMontage);
+		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, AbilityMontage);
 	}
 
 	bSwiftStrike = false;
 
 	// MovementMode Falling 으로 변경
-	PlayerBase->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Falling);
+	GenjiRef->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Falling);
 
 	// 최대 가속도 정상화
-	PlayerBase->GetCharacterMovement()->MaxAcceleration = 2048.f;
+	GenjiRef->GetCharacterMovement()->MaxAcceleration = 2048.f;
 
 	// 공중에 있는동안 쌓인 중력가속도 리셋
-	PlayerBase->StopMovement();
+	GenjiRef->StopMovement();
 
 	// Input 다시 받기
-	AController* Controller = PlayerBase->GetController();
-	if (Controller)
+	if (AController* Controller = GenjiRef->GetController())
 	{
 		Controller->SetIgnoreMoveInput(false);
 		Controller->SetIgnoreLookInput(false);
 	}
-	else
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeFinished Controller nullptr"));
-	}
-
+	
 	// 캡슐 컴포넌트 크기 리셋
 	SwiftStrikeCapsuleSizeTimeline.PlayFromStart();
 
 	// 적 캡슐 반응 다시 Block
-	PlayerBase->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Block);
+	GenjiRef->GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Block);
 
 	FVector zeroVector = FVector::ZeroVector;
 	SwiftStrikeStartLocation = zeroVector;
@@ -255,24 +196,14 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeFinishSetting()
 	// 질풍참 콜라이더 콜리전 끄기
 	if (SwiftStrikeCollider)
 	{
-		SwiftStrikeCollider->SwiftStrikeFinished();
-	}
-	else
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeFinished SwiftStrikeCollider nullptr"));
+		SwiftStrikeCollider->Deactivate();
 	}
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeUpdate PlayerBase nullptr"));
-		return;
-	}
-
 	// 현재 엑터의 도착 위치로의 방향벡터
-	FVector DirectionVector = SwiftStrikeEndLocation - PlayerBase->GetActorLocation();
+	FVector DirectionVector = SwiftStrikeEndLocation - GenjiRef->GetActorLocation();
 	DirectionVector.Normalize();
 
 	// 투영 벡터 더하기
@@ -280,32 +211,26 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
 	DirectionVector.Normalize();
 
 	// 이동
-	PlayerBase->AddMovementInput(DirectionVector, 1.f, true);
+	GenjiRef->AddMovementInput(DirectionVector, 1.f, true);
 
 	// 투영 벡터는 점차 감소
 	SwiftStrikeHitNormalProjection = FMath::VInterpTo(SwiftStrikeHitNormalProjection, FVector::ZeroVector, DeltaTime, HitNormalProjectionInterpSpeed);
 
 	// 목표 위치에 도달하면 몽타주 종료
-	if (PlayerBase->GetActorLocation().Equals(SwiftStrikeEndLocation, 10.f))
+	if (GenjiRef->GetActorLocation().Equals(SwiftStrikeEndLocation, 10.f))
 	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, SwiftStrikeMontage);
+		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, AbilityMontage);
 	}
 }
 
 void UGenji_SwiftStrikeComponent::OnSwiftStrikeComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent OnSwiftStrikeComponentHit PlayerBase nullptr"));
-		return;
-	}
-
 	// 벽에 닿았고, 질풍참 진행중일 경우
 	if (Hit.bBlockingHit && bSwiftStrike)
 	{
 		// 벽의 노말 벡터와 액터의 Right벡터를 내적
 		const FVector HitNormal = Hit.Normal;
-		const FVector ActorRightVector = PlayerBase->GetActorRightVector();
+		const FVector ActorRightVector = GenjiRef->GetActorRightVector();
 		const float dot = FVector::DotProduct(ActorRightVector, HitNormal);
 
 		// 방향에 맞게 투영 벡터값 입력, 벽과 거의 수직인 경우 값 적용 x
@@ -336,37 +261,17 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineSettings()
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineUpdate(float Alpha)
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeCapsuleSizeTimelineUpdate PlayerBase nullptr"));
-		return;
-	}
-
 	FVector2D CapsuleSize = FMath::Lerp(SwiftStrikeCapsuleSize2D, CapsuleSize2D, Alpha);
 	 
-	PlayerBase->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize.X, CapsuleSize.Y);
+	GenjiRef->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize.X, CapsuleSize.Y);
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineFinished()
 {
-	if (PlayerBase == nullptr)
-	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeCapsuleSizeTimelineFinished PlayerBase nullptr"));
-		return;
-	}
-
-	PlayerBase->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize2D.X, CapsuleSize2D.Y);
-}
-
-void UGenji_SwiftStrikeComponent::SwiftStrikeMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
-{
-	if (Montage == SwiftStrikeMontage && bInterrupted)
-	{
-		DeactivateAbility();
-	}
+	GenjiRef->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize2D.X, CapsuleSize2D.Y);
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeMontageFinished()
 {
-	DeactivateAbility();
+	FinishAbility();
 }

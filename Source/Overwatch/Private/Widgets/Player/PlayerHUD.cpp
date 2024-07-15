@@ -1,6 +1,5 @@
 ﻿#include "Widgets/Player/PlayerHUD.h"
 
-#include "ActorComponents/Status/HPComponent.h"
 #include "Characters/Player/PlayerBase.h"
 #include "Components/ProgressBar.h"
 

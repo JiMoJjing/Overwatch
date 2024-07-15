@@ -5,17 +5,16 @@
 #include "ActorComponents/Ability/AbilityManagementComponent.h"
 #include "ActorComponents/Ability/AmmoComponent.h"
 #include "Utilities.h"
+#include "ActorComponents/Ability/ProjectileAmmoComponent.h"
 
 
 void UGenji_PrimaryFireComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerBase)
+	if (AGenji* Genji = Cast<AGenji>(GetOwner()))
 	{
-		ProjectilePoolComponent = Cast<AGenji>(PlayerBase)->GetProjectilePoolComponent();
-		AmmoComponent = PlayerBase->GetAmmoComponent();
-		//GenjiRef->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UGenji_PrimaryFireComponent::MontageInterrupted);
+		ProjectileAmmoComponent = Cast<UProjectileAmmoComponent>(Genji->GetProjectileAmmoComponent());
 	}
 	else
 	{
@@ -23,38 +22,29 @@ void UGenji_PrimaryFireComponent::BeginPlay()
 	}
 }
 
-void UGenji_PrimaryFireComponent::UseAbility()
+void UGenji_PrimaryFireComponent::StartAbility()
 {
-	Super::UseAbility();
-}
-
-void UGenji_PrimaryFireComponent::ActivateAbility()
-{
-	Super::ActivateAbility();
+	Super::StartAbility();
 
 	PrimaryFire();
 	CooldownStart();
 }
 
-void UGenji_PrimaryFireComponent::DeactivateAbility()
-{
-	Super::DeactivateAbility();
-}
-
 void UGenji_PrimaryFireComponent::CooldownEnd()
 {
 	Super::CooldownEnd();
-	DeactivateAbility();
+	FinishAbility();
 }
 
 void UGenji_PrimaryFireComponent::PrimaryFire()
 {
-	if (!(PlayerBase && AbilityManagementComponent && AmmoComponent)) return;
-	if (!AmmoComponent->CanFire()) return;
-
-	if (PrimaryFireMontage)
+	if (AbilityManagementComponent == nullptr && ProjectileAmmoComponent == nullptr) return;
+	if (AbilityMontage == nullptr) return;
+	if (!ProjectileAmmoComponent->CanFire()) return;
+	
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(PrimaryFireMontage);
+		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
 	}
 	else
 	{
@@ -64,28 +54,14 @@ void UGenji_PrimaryFireComponent::PrimaryFire()
 
 void UGenji_PrimaryFireComponent::SingleShot()
 {
-	if (!(PlayerBase && ProjectilePoolComponent && AmmoComponent))
-	{
-		CLog::Log(TEXT("UGenji_PrimaryFireComponent SingleShot PlayerBase && ProjectilePoolComponent && AmmoComponent nullptr"));
-		return;
-	}
-
-	if (AmmoComponent->CanFire())
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
 		FVector StartLocation = PlayerBase->GetMesh()->GetSocketLocation(FName(TEXT("ShurikenStart")));
 		FVector Direction;
 		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_GameTraceChannel9))
 		{
-			ProjectilePoolComponent->ActivateProjectile(StartLocation, Direction);
-			AmmoComponent->ConsumeAmmo(1);
+			ProjectileAmmoComponent->ActivateProjectile(StartLocation, Direction);
+			ProjectileAmmoComponent->ConsumeAmmo(1);
 		}
-	}
-}
-
-void UGenji_PrimaryFireComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
-{
-	if (Montage == PrimaryFireMontage && bInterrupted)
-	{
-		DeactivateAbility();
 	}
 }

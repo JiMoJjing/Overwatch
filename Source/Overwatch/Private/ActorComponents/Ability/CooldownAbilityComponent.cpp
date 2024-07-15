@@ -8,7 +8,6 @@ UCooldownAbilityComponent::UCooldownAbilityComponent()
 void UCooldownAbilityComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void UCooldownAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -17,28 +16,39 @@ void UCooldownAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 }
 
+void UCooldownAbilityComponent::AbilityWidgetInit()
+{
+	Super::AbilityWidgetInit();
+	CooldownTimeChanged(CooldownTime);
+}
+
 void UCooldownAbilityComponent::CooldownStart()
 {
+	if(bReset)
+	{
+		bReset = false;
+		return;
+	}
 	AddAbilityState(AbilityState,EAbilityState::EAS_Cooldown);
 	AbilityStateChanged();
-	if (bHasCooldownWidget)
+	if (OnCooldownTimeChanged.IsBound())
 	{
-		NowCooldownTime = CooldownDuration;
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownTimerTick, 0.1f, true, 0.f);
+		RemainingCooldownTime = CooldownTime;
+		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownTick, 0.1f, true, 0.f);
 	}
 	else
 	{
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownEnd, CooldownDuration, false);
+		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownEnd, CooldownTime, false);
 	}
 }
 
-void UCooldownAbilityComponent::CooldownTimerTick()
+void UCooldownAbilityComponent::CooldownTick()
 {
-	NowCooldownTime -= 0.1f;
+	RemainingCooldownTime -= 0.1f;
 	
-	CooldownTimeChanged(NowCooldownTime);
+	CooldownTimeChanged(RemainingCooldownTime);
 	
-	if (FMath::IsNearlyZero(NowCooldownTime, 0.01f))
+	if (FMath::IsNearlyZero(RemainingCooldownTime, 0.01f))
 	{
 		CooldownEnd();
 	}
@@ -54,11 +64,18 @@ void UCooldownAbilityComponent::CooldownEnd()
 	}
 }
 
-void UCooldownAbilityComponent::CooldownTimeChanged(const float InNowCooldownTime)
+void UCooldownAbilityComponent::CooldownTimeChanged(const float InRemainingCooldownTime) const
 {
-	if(OnCooldownTimeChanged.IsBound())
+	OnCooldownTimeChanged.Broadcast(InRemainingCooldownTime, CooldownTime);
+}
+
+void UCooldownAbilityComponent::CooldownReset()
+{
+	if(IsAbilityState(AbilityState, EAbilityState::EAS_Active))
 	{
-		OnCooldownTimeChanged.Broadcast(InNowCooldownTime, CooldownDuration);
+		bReset = true;
+		return;
 	}
+	CooldownEnd();
 }
 

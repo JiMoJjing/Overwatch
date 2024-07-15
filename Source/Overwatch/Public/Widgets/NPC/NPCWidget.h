@@ -1,17 +1,15 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "EnemyHPBar.generated.h"
+#include "Enums/TeamID.h"
+#include "NPCWidget.generated.h"
 
+class UTextBlock;
 class UProgressBar;
-/**
- * 
- */
+
 UCLASS()
-class OVERWATCH_API UEnemyHPBar : public UUserWidget
+class OVERWATCH_API UNPCWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
@@ -23,7 +21,14 @@ public:
 	UFUNCTION()
 	void OnHPChanged(float InCurrentHP, float InMaxHP);
 
+	void SetNPCNameTextBlock(const FText& InName) const;
+
+	void SetColorByTeam(bool IsTeam) const;
+
 private:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta = (AllowPrivateAccess = "true", BindWidget))
 	TObjectPtr<UProgressBar> HPBar;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta = (AllowPrivateAccess = "true", BindWidget))
+	TObjectPtr<UTextBlock> NPCNameTextBlock;
 };

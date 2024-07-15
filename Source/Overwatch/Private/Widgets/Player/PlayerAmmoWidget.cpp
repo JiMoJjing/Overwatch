@@ -14,7 +14,6 @@ void UPlayerAmmoWidget::NativeConstruct()
 		{
 			MaxAmmo = AmmoComponent->GetMaxAmmo();
 			AmmoComponent->OnAmmoChanged.AddDynamic(this, &UPlayerAmmoWidget::AmmoChanged);
-			AmmoComponent->ConsumeAmmo(0);
 
 			if(UTexture* Texture = AmmoComponent->GetAbilityTexture())
 			{

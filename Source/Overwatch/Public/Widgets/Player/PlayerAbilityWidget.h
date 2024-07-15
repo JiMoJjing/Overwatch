@@ -23,7 +23,7 @@ protected:
 	void AbilityStateChanged(uint8 InAbilityState);
 
 	UFUNCTION()
-	void CooldownTimeChanged(float InNowCooldownTime, float InCooldownDuration);
+	void CooldownTimeChanged(float InRemainingCooldownTime, float InCooldownTime);
 
 	UPROPERTY(meta = (AllowPrivateAccess = "true", BindWidget))
 	TObjectPtr<UImage> BackgroundImage;
@@ -41,14 +41,14 @@ protected:
 	EAbilityType AbilityType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FColor BackgroundImageColor_Available;
+	FSlateColor BackgroundImageColor_Available;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FColor BackgroundImageColor_Active;
+	FSlateColor BackgroundImageColor_Active;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FColor BackgroundImageColor_Cooldown;
+	FSlateColor BackgroundImageColor_Cooldown;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	FColor BackgroundImageColor_Unavailable;
+	FSlateColor BackgroundImageColor_Unavailable;
 };

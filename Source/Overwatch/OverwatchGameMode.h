@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,6 +11,9 @@ class AOverwatchGameMode : public AGameModeBase
 
 public:
 	AOverwatchGameMode();
+
+	void Server_ReceiveCharacterDeath(AController* DeadCharacterController, AController* EventInstigator, AActor* DamageCauser, bool bIsHeadShot);
+	void BroadcastCharacterDeathToControllers(AController* DeadCharacterController, AController* EventInstigator, AActor* DamageCauser, bool bIsHeadShot);
 };
 
 

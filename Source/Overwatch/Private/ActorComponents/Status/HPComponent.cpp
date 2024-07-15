@@ -21,7 +21,7 @@ void UHPComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
 }
 
-float UHPComponent::TakeDamage(float InDamageAmount)
+float UHPComponent::TakeDamage(float InDamageAmount, bool& IsDeath)
 {
 	float DamageAmount = InDamageAmount;
 
@@ -29,7 +29,7 @@ float UHPComponent::TakeDamage(float InDamageAmount)
 	{
 		DamageAmount = CurrentHP;
 		CurrentHP = 0.f;
-		CharacterDeath();
+		IsDeath = true;
 	}
 	else
 	{
@@ -61,7 +61,13 @@ float UHPComponent::TakeHeal(float InHealAmount)
 
 void UHPComponent::CharacterDeath() const
 {
-	Cast<ACharacterBase>(GetOwner())->CharacterDeath();
+	//Cast<ACharacterBase>(GetOwner())->CharacterDeath();
+}
+
+void UHPComponent::CharacterRevive()
+{
+	CurrentHP = MaxHP;
+	HPChanged();
 }
 
 void UHPComponent::HPChanged() const

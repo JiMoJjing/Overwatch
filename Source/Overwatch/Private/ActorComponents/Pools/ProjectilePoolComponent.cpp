@@ -2,6 +2,7 @@
 
 #include "Projectiles/ProjectileBase.h"
 #include "Utilities.h"
+#include "Characters/CharacterBase.h"
 
 UProjectilePoolComponent::UProjectilePoolComponent()
 {
@@ -42,12 +43,12 @@ void UProjectilePoolComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UProjectilePoolComponent::ActivateProjectile(const FVector& StartLocation, const FVector& Direction)
 {
+	if(ProjectilePools.IsEmpty()) return;
+	
 	AProjectileBase* ProjectileObject = ProjectilePools[PoolIndex];
 
-	if (ProjectileObject && ProjectileObject->CanActivate())
+	if (ProjectileObject)
 	{
-		ProjectileObject->SetOwner(GetOwner());
-		ProjectileObject->SetInstigator(Cast<APawn>(GetOwner()));
 		ProjectileObject->Activate(StartLocation, Direction);
 		PoolIndex++;
 	}

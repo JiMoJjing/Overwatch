@@ -6,20 +6,19 @@
 UAmmoComponent::UAmmoComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	//PrimaryComponentTick.TickInterval = 0.1f;
+
 	MaxAmmo = 0;
 	CurrentAmmo = 0;
+
+	bBufferedInput = false;
 }
 
 void UAmmoComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerBase)
-	{
-		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UAmmoComponent::OnMontageInterrupted);
-	}
 	CurrentAmmo = MaxAmmo;
+	AmmoChanged();
 }
 
 void UAmmoComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -30,57 +29,58 @@ void UAmmoComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 void UAmmoComponent::UseAbility()
 {
 	if (IsAmmoFull()) return;
-	
-	if (CanActivateAbility())
-	{
-		ActivateAbility();
-		return;
-	}
 
-	if (AbilityManagementComponent && AbilityManagementComponent->IsAbilityActivate())
+	if(AbilityManagementComponent && AbilityManagementComponent->IsAbilityActive())
 	{
 		bBufferedInput = true;
 		return;
 	}
 
+	Super::UseAbility();
 }
 
-void UAmmoComponent::ActivateAbility()
+void UAmmoComponent::StartAbility()
 {
-	Super::ActivateAbility();
+	Super::StartAbility();
 
 	PlayReloadingMontage();
 }
 
-void UAmmoComponent::DeactivateAbility()
+void UAmmoComponent::FinishAbility()
 {
-	Super::DeactivateAbility();
+	Super::FinishAbility();
 }
 
-void UAmmoComponent::OnAbilityDeactivated(EAbilityType InAbilityType)
+void UAmmoComponent::OnOtherAbilityFinished(EAbilityType InAbilityType)
 {
-	Super::OnAbilityDeactivated(AbilityType);
+	Super::OnOtherAbilityFinished(AbilityType);
 
 	if (bBufferedInput)
 	{
-		ActivateAbility();
-		bBufferedInput = false;
+		StartAbility();
 	}
 }
 
 void UAmmoComponent::PlayReloadingMontage()
 {
-	if (ReloadingMontage && PlayerBase)
+	if(AbilityMontage == nullptr) return;
+	
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(ReloadingMontage);
+		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
 	}
 }
 
 void UAmmoComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
 {
-	if (Montage == ReloadingMontage && bInterrupted)
+	if(AbilityMontage == Montage && bInterrupted)
 	{
-		DeactivateAbility();
+		FinishAbility();
+		
+		if(CurrentAmmo != 0)
+		{
+			bBufferedInput = false;
+		}
 	}
 }
 
@@ -107,7 +107,8 @@ void UAmmoComponent::ConsumeAmmo(int32 InAmount)
 void UAmmoComponent::Reload()
 {
 	CurrentAmmo = MaxAmmo;
+	bBufferedInput = false;
 	AmmoChanged();
-	DeactivateAbility();
+	FinishAbility();
 }
 

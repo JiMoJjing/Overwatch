@@ -2,6 +2,7 @@
 #include "Components/BoxComponent.h"
 
 #include "Utilities.h"
+#include "Characters/CharacterBase.h"
 
 ASwiftStrikeCollider::ASwiftStrikeCollider()
 {
@@ -20,6 +21,11 @@ void ASwiftStrikeCollider::BeginPlay()
 {
 	Super::BeginPlay();
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ASwiftStrikeCollider::OnBoxBeginOverlap);
+
+	if(GetOwner())
+	{
+		SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	}
 }
 
 void ASwiftStrikeCollider::Tick(float DeltaTime)
@@ -28,21 +34,34 @@ void ASwiftStrikeCollider::Tick(float DeltaTime)
 
 }
 
-void ASwiftStrikeCollider::SwiftStrikeStarted() const	
+void ASwiftStrikeCollider::Activate() const	
 {
 	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
-void ASwiftStrikeCollider::SwiftStrikeFinished() const
+void ASwiftStrikeCollider::Deactivate() const
 {
 	BoxComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ASwiftStrikeCollider::SetCollisionProfileByTeam(ETeamID TeamID)
+{
+	switch (TeamID)
+	{
+	case ETeamID::ETI_Team1:
+		BoxComponent->SetCollisionProfileName(FName(TEXT("Team1Collider")));
+		break;
+	case ETeamID::ETI_Team2:
+		BoxComponent->SetCollisionProfileName(FName(TEXT("Team2Collider")));
+		break;
+	}
 }
 
 void ASwiftStrikeCollider::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherComp->GetOwner())
 	{
-		UGameplayStatics::ApplyDamage(OtherComp->GetOwner(), 50.f, GetInstigator()->GetController(), GetOwner(), UDamageType::StaticClass());
+		UGameplayStatics::ApplyDamage(OtherComp->GetOwner(), 50.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 	}
 }
 

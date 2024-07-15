@@ -8,7 +8,7 @@ public class Overwatch : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "AnimGraphRuntime", "UMG", "Niagara" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "AnimGraphRuntime", "UMG", "Niagara", "AIModule" });
 		PublicIncludePaths.Add(ModuleDirectory);
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

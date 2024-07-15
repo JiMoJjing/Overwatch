@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "ProjectileBase.generated.h"
 
+class UProjectileAmmoComponent;
 class USphereComponent;
 class UProjectileMovementComponent;
 class UNiagaraComponent;
@@ -23,17 +24,13 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
 	virtual void Activate(const FVector& StartLocation, const FVector& Direction);
 
-	UFUNCTION()
-	FORCEINLINE bool CanActivate() const { return bCanActivate; }
+	virtual void Deflected(APawn* NewInstigator, const FVector& Direction);
 
-	UFUNCTION()
-	virtual void Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction);
-
+	void SetProjectileAmmoComponent(UProjectileAmmoComponent* InComponent);
+	
 protected:
-	UFUNCTION()
 	virtual void Deactivate();
 
 	UFUNCTION()
@@ -43,8 +40,9 @@ protected:
 	virtual void OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	void LifeSpanTimerRestart();
-
-	virtual void SetTeamCollisionSettings(ETeamID TeamID);
+	
+public:
+	virtual void SetCollisionProfileByTeam(ETeamID TeamID);
 
 protected:
 	// 벽 판정용 SphereComponent 인게임에서 여러 투사체들은 벽에대한 판정과 캐릭터에 대한 판정이 다르다.
@@ -73,12 +71,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "10.0"))
 	float LifeSpan = 5.0f;
 
-	UPROPERTY()
-	bool bCanActivate = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	float Damage = 0.f;
 
 	UPROPERTY()
 	FTimerHandle LifeSpanTimerHandle;
 
 	UPROPERTY()
 	FName HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
+
+	UPROPERTY()
+	TWeakObjectPtr<UProjectileAmmoComponent> ProjectileAmmoComponent;
 };

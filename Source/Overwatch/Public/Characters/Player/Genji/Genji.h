@@ -6,7 +6,7 @@
 #include "Genji.generated.h"
 
 
-class UProjectilePoolComponent;
+class UProjectileAmmoComponent;
 class UGenji_PrimaryFireComponent;
 class UGenji_SecondaryFireComponent;
 class UGenji_SwiftStrikeComponent;
@@ -39,7 +39,7 @@ public:
 
 	/** AbilityComponent Getter 인데 캐릭터 전용으로 만든 AbilityComponent 하위 클래스 Getter임 */
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE UProjectilePoolComponent* GetProjectilePoolComponent() const { return ProjectilePoolComponent; }
+	FORCEINLINE UProjectileAmmoComponent* GetProjectileAmmoComponent() const;
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UGenji_PrimaryFireComponent* GetGenji_PrimaryFireComponent() const;
@@ -69,9 +69,6 @@ private:
 
 
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UProjectilePoolComponent> ProjectilePoolComponent;
-	
 	UPROPERTY()
 	uint32 JumpCount = 0;
 

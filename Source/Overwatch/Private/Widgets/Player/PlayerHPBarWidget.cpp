@@ -15,7 +15,6 @@ void UPlayerHPBarWidget::NativeConstruct()
 		if(PlayerBase->GetHPComponent())
 		{
 			PlayerBase->GetHPComponent()->OnHPChanged.AddDynamic(this, &UPlayerHPBarWidget::OnHPChanged);
-			PlayerBase->GetHPComponent()->TakeDamage(0.f);
 		}
 	}
 }

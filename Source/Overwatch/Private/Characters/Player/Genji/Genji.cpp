@@ -6,24 +6,34 @@
 #include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
 #include "ActorComponents/Ability/Genji/Genji_DeflectComponent.h"
 #include "ActorComponents/Ability/UltimateAbilityComponent.h"
-#include "ActorComponents/Pools/ProjectilePoolComponent.h"
+#include "ActorComponents/Ability/ProjectileAmmoComponent.h"
 
+#include "Controllers/OverwatchPlayerController.h"
 #include "Utilities.h"
 
 
 AGenji::AGenji()
 {
-	ProjectilePoolComponent = CreateDefaultSubobject<UProjectilePoolComponent>(TEXT("ProjectilePoolComponent"));
 	PrimaryFireComponent = CreateDefaultSubobject<UGenji_PrimaryFireComponent>(TEXT("PrimaryFireComponent"));
 	SecondaryFireComponent = CreateDefaultSubobject<UGenji_SecondaryFireComponent>(TEXT("SecondaryFireComponent"));
 	AbilityOneComponent = CreateDefaultSubobject<UGenji_SwiftStrikeComponent>(TEXT("Genji_SwiftStrikeComponent"));
 	AbilityTwoComponent = CreateDefaultSubobject<UGenji_DeflectComponent>(TEXT("Genji_DeflectComponent"));
 	UltimateAbilityComponent = CreateDefaultSubobject<UUltimateAbilityComponent>(TEXT("UltimateAbilityComponent"));
+	AmmoComponent = CreateDefaultSubobject<UProjectileAmmoComponent>(TEXT("ProjectileAmmoComponent"));
 }
 
 void AGenji::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if(AOverwatchPlayerController* OverwatchPlayerController = Cast<AOverwatchPlayerController>(GetController()))
+	{
+		if(UGenji_SwiftStrikeComponent* SwiftStrikeComponent = Cast<UGenji_SwiftStrikeComponent>(AbilityOneComponent))
+		{
+			OverwatchPlayerController->OnKillAssist.AddDynamic(SwiftStrikeComponent, &UGenji_SwiftStrikeComponent::CooldownReset);
+		}
+	}
+	
 }
 
 void AGenji::Tick(float DeltaTime)
@@ -99,6 +109,15 @@ void AGenji::MovementModeChanged(ACharacter* InCharacter, EMovementMode InPrevMo
 		break;
 	}
 
+}
+
+UProjectileAmmoComponent* AGenji::GetProjectileAmmoComponent() const
+{
+	if(AmmoComponent)
+	{
+		return Cast<UProjectileAmmoComponent>(AmmoComponent);
+	}
+	return nullptr;
 }
 
 UGenji_PrimaryFireComponent* AGenji::GetGenji_PrimaryFireComponent() const

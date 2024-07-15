@@ -17,7 +17,10 @@ void ATwoSphereProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetTeamCollisionSettings(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	if(GetOwner())
+	{
+		SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+	}
 	
 	OverlapSphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ATwoSphereProjectileBase::ATwoSphereProjectileBase::OnOverlapSphereBeginOverlap);
 	OverlapSphereComponent->SetSphereRadius(OverlapSphereRadius);
@@ -34,8 +37,6 @@ void ATwoSphereProjectileBase::OnOverlapSphereBeginOverlap(UPrimitiveComponent* 
 	{
 		return;
 	}
-	
-	Deactivate();
 	
 	FHitResult HitResult;
 	TArray<AActor*> IgnoreActors;
@@ -57,39 +58,51 @@ void ATwoSphereProjectileBase::OnOverlapSphereBeginOverlap(UPrimitiveComponent* 
 	
 	if(HitResult.GetActor())
 	{
-		UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), 28.f, GetOwner()->GetActorLocation(), HitResult, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		UGameplayStatics::ApplyPointDamage(HitResult.GetActor(), Damage, GetInstigator()->GetActorLocation(), HitResult, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 	}
+
+	Deactivate();
 }
 
-void ATwoSphereProjectileBase::Deflected(AActor* NewOwner, APawn* NewInstigator, const FVector& Direction)
+void ATwoSphereProjectileBase::Deflected(APawn* NewInstigator, const FVector& Direction)
 {
-	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	SetActorRotation(Direction.Rotation());
 
-	SetTeamCollisionSettings(Cast<ACharacterBase>(NewOwner)->GetTeamID());
+	SetCollisionProfileByTeam(Cast<ACharacterBase>(NewInstigator)->GetTeamID());
 
 	LifeSpanTimerRestart();
 	
 	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
 }
 
-void ATwoSphereProjectileBase::SetTeamCollisionSettings(ETeamID TeamID)
+void ATwoSphereProjectileBase::SetCollisionProfileByTeam(ETeamID TeamID)
 {
-	Super::SetTeamCollisionSettings(TeamID);
+	Super::SetCollisionProfileByTeam(TeamID);
 
 	switch (TeamID)
 	{
 	case ETeamID::ETI_Team1:
-		OverlapSphereCollisionProfileName = FName(TEXT("Team1ProjectileOverlap"));
+		OverlapSphereComponent->SetCollisionProfileName(FName(TEXT("Team1ProjectileOverlap")));
 		TraceTypeQuery = TraceTypeQuery3;
 		break;
 	case ETeamID::ETI_Team2:
-		OverlapSphereCollisionProfileName = FName(TEXT("Team2ProjectileOverlap"));
+		OverlapSphereComponent->SetCollisionProfileName(FName(TEXT("Team2ProjectileOverlap")));
 		TraceTypeQuery = TraceTypeQuery4;
 		break;
 	default:
 		break;
 	}
-	OverlapSphereComponent->SetCollisionProfileName(OverlapSphereCollisionProfileName);
+}
+
+void ATwoSphereProjectileBase::Activate(const FVector& StartLocation, const FVector& Direction)
+{
+	Super::Activate(StartLocation, Direction);
+	OverlapSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void ATwoSphereProjectileBase::Deactivate()
+{
+	Super::Deactivate();
+	OverlapSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }

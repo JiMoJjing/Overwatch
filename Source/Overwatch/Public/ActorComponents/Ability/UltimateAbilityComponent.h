@@ -37,7 +37,7 @@ public:
 	FOnUltimateGaugeChanged OnUltimateGaugeChanged;
 
 protected:
-	virtual void ActivateAbility() override;
+	virtual void StartAbility() override;
 
 	void ResetGauge();
 	void AutoAddGauge();
@@ -45,7 +45,7 @@ protected:
 	void UltimateGaugeChanged (const float InUltimateGaugePercentage) const;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Ultimate", meta=(AllowPrivateAccess = "true"))
 	float MaxUltimateGauge = 2000.f;
 	
 	UPROPERTY()

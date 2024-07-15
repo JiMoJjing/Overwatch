@@ -23,12 +23,12 @@ void UPlayerAbilityWidget::NativeConstruct()
 				{
 					AbilityImage->SetBrushResourceObject(Texture);
 				}
-				AbilityComponent->AbilityWidgetInit();
 			}
 			if(UCooldownAbilityComponent* CooldownAbilityComponent = Cast<UCooldownAbilityComponent>(AbilityComponent))
 			{
 				CooldownAbilityComponent->OnCooldownTimeChanged.AddDynamic(this, &UPlayerAbilityWidget::CooldownTimeChanged);
 			}
+			AbilityComponent->AbilityWidgetInit();
 		}
 	}
 }
@@ -73,8 +73,8 @@ void UPlayerAbilityWidget::AbilityStateChanged(uint8 InAbilityState)
 
 }
 
-void UPlayerAbilityWidget::CooldownTimeChanged(float InNowCooldownTime, float InCooldownDuration)
+void UPlayerAbilityWidget::CooldownTimeChanged(float InRemainingCooldownTime, float InCooldownTime)
 {
-	CooldownBar->SetPercent(1.f - InNowCooldownTime / InCooldownDuration);
-	CooldownTextBlock->SetText(FText::FromString(FString::FromInt(FMath::CeilToInt(InNowCooldownTime))));
+	CooldownBar->SetPercent(1.f - InRemainingCooldownTime / InCooldownTime);
+	CooldownTextBlock->SetText(FText::FromString(FString::FromInt(FMath::CeilToInt(InRemainingCooldownTime))));
 }

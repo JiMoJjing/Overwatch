@@ -1,21 +1,18 @@
 #include "ActorComponents/Ability/Genji/Genji_SecondaryFireComponent.h"
 #include "Characters/Player/Genji/Genji.h"
 #include "Characters/Player/PlayerBase.h"
-#include "ActorComponents/Pools/ProjectilePoolComponent.h"
-#include "ActorComponents/Ability/AbilityManagementComponent.h"
 #include "ActorComponents/Ability/AmmoComponent.h"
 
 #include "Utilities.h"
+#include "ActorComponents/Ability/ProjectileAmmoComponent.h"
 
 void UGenji_SecondaryFireComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerBase)
+	if (AGenji* Genji = Cast<AGenji>(GetOwner()))
 	{
-		ProjectilePoolComponent = Cast<AGenji>(PlayerBase)->GetProjectilePoolComponent();
-		AmmoComponent = PlayerBase->GetAmmoComponent();
-		//GenjiRef->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UGenji_SecondaryFireComponent::MontageInterrupted);
+		ProjectileAmmoComponent = Cast<UProjectileAmmoComponent>(Genji->GetProjectileAmmoComponent());
 	}
 	else
 	{
@@ -23,66 +20,30 @@ void UGenji_SecondaryFireComponent::BeginPlay()
 	}
 }
 
-void UGenji_SecondaryFireComponent::UseAbility()
+void UGenji_SecondaryFireComponent::StartAbility()
 {
-	Super::UseAbility();
-}
-
-void UGenji_SecondaryFireComponent::ActivateAbility()
-{
-	Super::ActivateAbility();
+	Super::StartAbility();
 
 	SecondaryFire();
 	CooldownStart();
-}
-
-void UGenji_SecondaryFireComponent::DeactivateAbility()
-{
-	Super::DeactivateAbility();
 }
 
 void UGenji_SecondaryFireComponent::CooldownEnd()
 {
 	Super::CooldownEnd();
 
-	DeactivateAbility();
-}
-
-
-void UGenji_SecondaryFireComponent::TripleShot()
-{
-	if (!(PlayerBase && ProjectilePoolComponent && AmmoComponent))
-	{
-		CLog::Log(TEXT("UGenji_SecondaryFireComponent TripleShot PlayerBase && ProjectilePoolComponent && AmmoComponent nullptr"));
-		return;
-	}
-
-	if (AmmoComponent->CanFire())
-	{
-		FVector StartLocation = PlayerBase->GetMesh()->GetSocketLocation(FName(TEXT("ShurikenStart")));
-		FVector Direction;
-		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_GameTraceChannel9))
-		{
-			const FVector LeftDirection = Direction.RotateAngleAxis(-Angle, FVector::UpVector);
-			const FVector RightDirection = Direction.RotateAngleAxis(Angle, FVector::UpVector);
-
-			ProjectilePoolComponent->ActivateProjectile(StartLocation, Direction);
-			ProjectilePoolComponent->ActivateProjectile(StartLocation, LeftDirection);
-			ProjectilePoolComponent->ActivateProjectile(StartLocation, RightDirection);
-
-			AmmoComponent->ConsumeAmmo(3);
-		}
-	}
+	FinishAbility();
 }
 
 void UGenji_SecondaryFireComponent::SecondaryFire()
 {
-	if (!(PlayerBase && AbilityManagementComponent && AmmoComponent)) return;
-	if (!AmmoComponent->CanFire()) return;
+	if (!(AbilityManagementComponent && ProjectileAmmoComponent)) return;
+	if (!ProjectileAmmoComponent->CanFire()) return;
+	if (!AbilityMontage) return;
 
-	if (SecondaryFireMontage && PlayerBase)
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
-		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(SecondaryFireMontage);
+		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
 	}
 	else
 	{
@@ -90,39 +51,22 @@ void UGenji_SecondaryFireComponent::SecondaryFire()
 	}
 }
 
-//void UGenji_SecondaryFireComponent::DelayTimerStart()
-//{
-//	if (GetOwner())
-//	{
-//		GetOwner()->GetWorldTimerManager().SetTimer(DelayTimerHandle, this, &UGenji_SecondaryFireComponent::DelayTimerEnd, DelayTime, false);
-//	}
-//	else
-//	{
-//		CLog::Log(TEXT("UGenji_SecondaryFireComponent DelayTimerStart GetOwner() nullptr"));
-//	}
-//}
-//
-//void UGenji_SecondaryFireComponent::DelayTimerEnd()
-//{
-//	DeactivateAbility();
-//}
-//
-//bool UGenji_SecondaryFireComponent::IsDelayTimerActive()
-//{
-//	bool bActive = false;
-//
-//	if (GetOwner())
-//	{
-//		bActive = GetOwner()->GetWorldTimerManager().IsTimerActive(DelayTimerHandle);
-//	}
-//
-//	return bActive;
-//}
-
-void UGenji_SecondaryFireComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
+void UGenji_SecondaryFireComponent::TripleShot()
 {
-	if (Montage == SecondaryFireMontage && bInterrupted)
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
 	{
-		DeactivateAbility();
+		FVector StartLocation = PlayerBase->GetMesh()->GetSocketLocation(FName(TEXT("ShurikenStart")));
+		FVector Direction;
+		if (PlayerBase->GetDirectionToCrosshair(StartLocation, Direction, ECollisionChannel::ECC_GameTraceChannel9))
+		{
+			const FVector LeftDirection = Direction.RotateAngleAxis(-TripleShotAngle, FVector::UpVector);
+			const FVector RightDirection = Direction.RotateAngleAxis(TripleShotAngle, FVector::UpVector);
+
+			ProjectileAmmoComponent->ActivateProjectile(StartLocation, Direction);
+			ProjectileAmmoComponent->ActivateProjectile(StartLocation, LeftDirection);
+			ProjectileAmmoComponent->ActivateProjectile(StartLocation, RightDirection);
+
+			ProjectileAmmoComponent->ConsumeAmmo(3);
+		}
 	}
 }
