@@ -22,12 +22,13 @@ public:
 
 protected:
 	virtual void StartAbility() override;
-	virtual void CooldownEnd() override;
+	virtual void CooldownTimerEnd() override;
 
 private:
-	void PrimaryFire();
-
+	void PlayAbilityMontage();
+	
 private:
 	UPROPERTY()
 	TObjectPtr<UProjectileAmmoComponent> ProjectileAmmoComponent;
+
 };

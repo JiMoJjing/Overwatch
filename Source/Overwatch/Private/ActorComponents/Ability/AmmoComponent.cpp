@@ -43,7 +43,7 @@ void UAmmoComponent::StartAbility()
 {
 	Super::StartAbility();
 
-	PlayReloadingMontage();
+	PlayAbilityMontage();
 }
 
 void UAmmoComponent::FinishAbility()
@@ -53,15 +53,22 @@ void UAmmoComponent::FinishAbility()
 
 void UAmmoComponent::OnOtherAbilityFinished(EAbilityType InAbilityType)
 {
-	Super::OnOtherAbilityFinished(AbilityType);
-
-	if (bBufferedInput)
+	Super::OnOtherAbilityFinished(InAbilityType);
+	
+	if(bBufferedInput)
 	{
-		StartAbility();
+		if(IsAmmoFull())
+		{
+			bBufferedInput = false;
+		}
+		else
+		{
+			StartAbility();
+		}
 	}
 }
 
-void UAmmoComponent::PlayReloadingMontage()
+void UAmmoComponent::PlayAbilityMontage()
 {
 	if(AbilityMontage == nullptr) return;
 	
@@ -71,10 +78,23 @@ void UAmmoComponent::PlayReloadingMontage()
 	}
 }
 
+void UAmmoComponent::StopAbilityMontage()
+{
+	if(AbilityMontage == nullptr) return;
+
+	if (APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwner()))
+	{
+		PlayerBase->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, AbilityMontage);
+	}
+}
+
 void UAmmoComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
 {
 	if(AbilityMontage == Montage && bInterrupted)
 	{
+		if(AbilityManagementComponent->IsAbilityActive())
+			return;
+			
 		FinishAbility();
 		
 		if(CurrentAmmo != 0)

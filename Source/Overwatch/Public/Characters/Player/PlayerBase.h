@@ -69,9 +69,6 @@ public:
 	// MovementMode 바뀔 때 실행 할 함수 override해서 사용하기
 	UFUNCTION()
 	virtual void MovementModeChanged(ACharacter* InCharacter, EMovementMode InPrevMovementMode, uint8 InPrevCustomMovementMode);
-	
-
-
 
 	/**
 	* InputAction에 바인드 된 함수들 Child Class에서 override 하여 사용할 것
@@ -111,7 +108,7 @@ public:
 	 * @param OutHitResult HitResult
 	 * @param OutHitLocation HitLocation
 	 * @param InCollisionChannel TraceChannel 
-	 * @return 
+	 * @return Trace 성공 여부
 	 */
 	bool TraceUnderCrosshair(const float TraceDistance, FHitResult& OutHitResult, FVector& OutHitLocation, const ECollisionChannel InCollisionChannel);
 	/**
@@ -163,50 +160,50 @@ protected:
 	
 private:
 	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 	/** InputActions */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveForwardAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveBackwardAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveRightAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> MoveLeftAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LookAction;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> JumpAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> AbilityOneAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> AbilityTwoAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> AbilityThreeAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> InteractionAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> PrimaryFireAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> SecondaryFireAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> ReloadingAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PlayerBase_Input", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> QuickMeleeAction;
 
 public:

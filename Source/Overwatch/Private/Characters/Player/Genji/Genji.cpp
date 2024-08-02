@@ -5,11 +5,14 @@
 #include "ActorComponents/Ability/Genji/Genji_SecondaryFireComponent.h"
 #include "ActorComponents/Ability/Genji/Genji_SwiftStrikeComponent.h"
 #include "ActorComponents/Ability/Genji/Genji_DeflectComponent.h"
-#include "ActorComponents/Ability/UltimateAbilityComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_DragonbladeComponent.h"
 #include "ActorComponents/Ability/ProjectileAmmoComponent.h"
 
 #include "Controllers/OverwatchPlayerController.h"
 #include "Utilities.h"
+#include "ActorComponents/Ability/QuickMeleeComponent.h"
+#include "ActorComponents/Ability/Genji/Genji_DragonbladeSlashComponent.h"
+#include "Weapons/WeaponBase.h"
 
 
 AGenji::AGenji()
@@ -18,8 +21,10 @@ AGenji::AGenji()
 	SecondaryFireComponent = CreateDefaultSubobject<UGenji_SecondaryFireComponent>(TEXT("SecondaryFireComponent"));
 	AbilityOneComponent = CreateDefaultSubobject<UGenji_SwiftStrikeComponent>(TEXT("Genji_SwiftStrikeComponent"));
 	AbilityTwoComponent = CreateDefaultSubobject<UGenji_DeflectComponent>(TEXT("Genji_DeflectComponent"));
-	UltimateAbilityComponent = CreateDefaultSubobject<UUltimateAbilityComponent>(TEXT("UltimateAbilityComponent"));
+	UltimateAbilityComponent = CreateDefaultSubobject<UGenji_DragonbladeComponent>(TEXT("Genji_DragonbladeComponent"));
 	AmmoComponent = CreateDefaultSubobject<UProjectileAmmoComponent>(TEXT("ProjectileAmmoComponent"));
+	DragonbladeSlashComponent = CreateDefaultSubobject<UGenji_DragonbladeSlashComponent>(TEXT("DragonbladeSlashComponent"));
+	QuickMeleeComponent = CreateDefaultSubobject<UQuickMeleeComponent>(TEXT("QuickMeleeComponent"));
 }
 
 void AGenji::BeginPlay()
@@ -33,12 +38,37 @@ void AGenji::BeginPlay()
 			OverwatchPlayerController->OnKillAssist.AddDynamic(SwiftStrikeComponent, &UGenji_SwiftStrikeComponent::CooldownReset);
 		}
 	}
-	
+
+	if(DragonbladeClass)
+	{
+		Weapon_Dragonblade = GetWorld()->SpawnActor<AWeaponBase>(DragonbladeClass);
+		
+		if(Weapon_Dragonblade)
+		{
+			AttachDragonbladeTo(FName(TEXT("Dragonblade_Pelvis")));
+		}
+	}
 }
 
 void AGenji::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void AGenji::SetDragonbladeActive(bool bActive)
+{
+	bDragonbladeActive = bActive;
+
+	if(bActive && OnDragonbladeActive.IsBound())
+	{
+		OnDragonbladeActive.Broadcast();
+		AmmoComponent->Reload();
+		AttachDragonbladeTo(FName(TEXT("Dragonblade_Hand")));
+	}
+	else if(bActive == false)
+	{
+		AttachDragonbladeTo(FName(TEXT("Dragonblade_Pelvis")));
+	}
 }
 
 void AGenji::Jump()
@@ -156,6 +186,15 @@ UGenji_DeflectComponent* AGenji::GetGenji_DeflectComponent() const
 	return nullptr;
 }
 
+UGenji_DragonbladeComponent* AGenji::GetGenji_DragonbladeComponent() const
+{
+	if(UltimateAbilityComponent)
+	{
+		return Cast<UGenji_DragonbladeComponent>(UltimateAbilityComponent);
+	}
+	return nullptr;
+}
+
 void AGenji::AbilityOne()
 {
 	if (AbilityOneComponent)
@@ -176,14 +215,21 @@ void AGenji::AbilityThree()
 {
 	if(UltimateAbilityComponent)
 	{
-		Super::AbilityThree();
 		UltimateAbilityComponent->UseAbility();
 	}
 }
 
 void AGenji::PrimaryFire()
 {
-	if (PrimaryFireComponent)
+	if(bDragonbladeActive)
+	{
+		if(DragonbladeSlashComponent)
+		{
+			DragonbladeSlashComponent->UseAbility();
+		}
+		return;
+	}
+	if(PrimaryFireComponent)
 	{
 		PrimaryFireComponent->UseAbility();
 	}
@@ -191,7 +237,15 @@ void AGenji::PrimaryFire()
 
 void AGenji::SecondaryFire()
 {
-	if (SecondaryFireComponent)
+	if(bDragonbladeActive)
+	{
+		if(DragonbladeSlashComponent)
+		{
+			DragonbladeSlashComponent->UseAbility();
+		}
+		return;
+	}
+	if(SecondaryFireComponent)
 	{
 		SecondaryFireComponent->UseAbility();
 	}
@@ -199,11 +253,26 @@ void AGenji::SecondaryFire()
 
 void AGenji::Reloading()
 {
-	Super::Reloading();
+	if(AmmoComponent)
+	{
+		AmmoComponent->UseAbility();
+	}
 }
 
 void AGenji::QuickMelee()
 {
+	if(bDragonbladeActive)
+	{
+		if(DragonbladeSlashComponent)
+		{
+			DragonbladeSlashComponent->UseAbility();
+		}
+		return;
+	}
+	if(QuickMeleeComponent)
+	{
+		QuickMeleeComponent->UseAbility();
+	}
 }
 
 void AGenji::ApplyDamageSuccess_Implementation(float Damage, bool bIsHeadShot)
@@ -214,4 +283,13 @@ void AGenji::ApplyDamageSuccess_Implementation(float Damage, bool bIsHeadShot)
 void AGenji::SecondJump()
 {
 	LaunchCharacter(FVector(0.f, 0.f, 500.f), false, true);
+}
+
+void AGenji::AttachDragonbladeTo(FName SocketName)
+{
+	if(Weapon_Dragonblade)
+	{
+		FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::KeepRelative, false);
+		Weapon_Dragonblade->AttachToComponent(GetMesh(), AttachmentTransformRules, SocketName);
+	}
 }

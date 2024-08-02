@@ -16,7 +16,7 @@ void UGenji_SecondaryFireComponent::BeginPlay()
 	}
 	else
 	{
-		CLog::Log(TEXT("UGenji_SecondaryFireComponent BeginPlay PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] Genji is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 }
 
@@ -24,18 +24,18 @@ void UGenji_SecondaryFireComponent::StartAbility()
 {
 	Super::StartAbility();
 
-	SecondaryFire();
-	CooldownStart();
+	PlayAbilityMontage();
+	CooldownTimerStart();
 }
 
-void UGenji_SecondaryFireComponent::CooldownEnd()
+void UGenji_SecondaryFireComponent::CooldownTimerEnd()
 {
-	Super::CooldownEnd();
+	Super::CooldownTimerEnd();
 
 	FinishAbility();
 }
 
-void UGenji_SecondaryFireComponent::SecondaryFire()
+void UGenji_SecondaryFireComponent::PlayAbilityMontage()
 {
 	if (!(AbilityManagementComponent && ProjectileAmmoComponent)) return;
 	if (!ProjectileAmmoComponent->CanFire()) return;
@@ -47,7 +47,7 @@ void UGenji_SecondaryFireComponent::SecondaryFire()
 	}
 	else
 	{
-		CLog::Log(TEXT("UGenji_SecondaryFireComponent UseAbility SecondaryFireMontage or PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] PlayerBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("PlayAbilityMontage"));
 	}
 }
 
@@ -68,5 +68,9 @@ void UGenji_SecondaryFireComponent::TripleShot()
 
 			ProjectileAmmoComponent->ConsumeAmmo(3);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] PlayerBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("TripleShot"));
 	}
 }

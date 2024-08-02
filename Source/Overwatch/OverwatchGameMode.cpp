@@ -1,4 +1,7 @@
 #include "OverwatchGameMode.h"
+
+#include "EngineUtils.h"
+#include "Characters/CharacterBase.h"
 #include "Controllers/OverwatchPlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 

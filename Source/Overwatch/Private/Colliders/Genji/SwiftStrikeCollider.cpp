@@ -1,4 +1,6 @@
 #include "Colliders/Genji/SwiftStrikeCollider.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "Components/BoxComponent.h"
 
 #include "Utilities.h"
@@ -22,9 +24,13 @@ void ASwiftStrikeCollider::BeginPlay()
 	Super::BeginPlay();
 	BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ASwiftStrikeCollider::OnBoxBeginOverlap);
 
-	if(GetOwner())
+	if(ACharacterBase* CharacterBase = Cast<ACharacterBase>(GetOwner()))
 	{
-		SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+		SetCollisionProfileByTeam(CharacterBase->GetTeamID());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] CharacterBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 }
 
@@ -50,18 +56,29 @@ void ASwiftStrikeCollider::SetCollisionProfileByTeam(ETeamID TeamID)
 	{
 	case ETeamID::ETI_Team1:
 		BoxComponent->SetCollisionProfileName(FName(TEXT("Team1Collider")));
+		BoxComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel6, ECR_Ignore);
 		break;
 	case ETeamID::ETI_Team2:
 		BoxComponent->SetCollisionProfileName(FName(TEXT("Team2Collider")));
+		BoxComponent->SetCollisionResponseToChannel(ECC_GameTraceChannel5, ECR_Ignore);
 		break;
 	}
 }
 
 void ASwiftStrikeCollider::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherComp->GetOwner())
+	if (AActor* HitActor = OtherComp->GetOwner())
 	{
-		UGameplayStatics::ApplyDamage(OtherComp->GetOwner(), 50.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		UGameplayStatics::ApplyDamage(HitActor, 50.f, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		SpawnSwiftStrikeHitEffect(HitActor->GetActorLocation(), FRotator::ZeroRotator);
+	}
+}
+
+void ASwiftStrikeCollider::SpawnSwiftStrikeHitEffect(const FVector& SpawnLocation, const FRotator& SpawnRotation) const
+{
+	if(SwiftStrikeHitEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SwiftStrikeHitEffect, SpawnLocation, SpawnRotation);
 	}
 }
 

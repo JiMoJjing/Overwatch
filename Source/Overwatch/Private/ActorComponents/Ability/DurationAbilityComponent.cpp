@@ -16,30 +16,30 @@ void UDurationAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UDurationAbilityComponent::DurationStart()
+void UDurationAbilityComponent::DurationTimerStart()
 {
 	if(OnDurationTimeChanged.IsBound())
 	{
 		RemainingDurationTime = DurationTime;
-		GetOwner()->GetWorldTimerManager().SetTimer(DurationTimerHandle, this, &UDurationAbilityComponent::DurationTick, 0.1f, true, 0.f);
+		GetOwner()->GetWorldTimerManager().SetTimer(DurationTimerHandle, this, &UDurationAbilityComponent::DurationTimerTick, 0.1f, true, 0.f);
 	}
 	else
 	{
-		GetOwner()->GetWorldTimerManager().SetTimer(DurationTimerHandle, this, &UDurationAbilityComponent::DurationEnd, DurationTime, false);
+		GetOwner()->GetWorldTimerManager().SetTimer(DurationTimerHandle, this, &UDurationAbilityComponent::DurationTimerEnd, DurationTime, false);
 	}
 }
 
-void UDurationAbilityComponent::DurationTick()
+void UDurationAbilityComponent::DurationTimerTick()
 {
 	RemainingDurationTime -= 0.1f;
 	DurationTimeChanged(RemainingDurationTime);
 	if(FMath::IsNearlyZero(RemainingDurationTime, 0.01f))
 	{
-		DurationEnd();
+		DurationTimerEnd();
 	}
 }
 
-void UDurationAbilityComponent::DurationEnd()
+void UDurationAbilityComponent::DurationTimerEnd()
 {
 	if (GetOwner()->GetWorldTimerManager().IsTimerActive(DurationTimerHandle))
 	{

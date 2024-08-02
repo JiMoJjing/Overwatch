@@ -22,7 +22,7 @@ void UCooldownAbilityComponent::AbilityWidgetInit()
 	CooldownTimeChanged(CooldownTime);
 }
 
-void UCooldownAbilityComponent::CooldownStart()
+void UCooldownAbilityComponent::CooldownTimerStart()
 {
 	if(bReset)
 	{
@@ -33,34 +33,34 @@ void UCooldownAbilityComponent::CooldownStart()
 	AbilityStateChanged();
 	if (OnCooldownTimeChanged.IsBound())
 	{
-		RemainingCooldownTime = CooldownTime;
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownTick, 0.1f, true, 0.f);
+		CooldownCurrentTime = CooldownTime;
+		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownTimerTick, 0.1f, true, 0.f);
 	}
 	else
 	{
-		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownEnd, CooldownTime, false);
+		GetOwner()->GetWorldTimerManager().SetTimer(CooldownTimerHandle, this, &UCooldownAbilityComponent::CooldownTimerEnd, CooldownTime, false);
 	}
 }
 
-void UCooldownAbilityComponent::CooldownTick()
-{
-	RemainingCooldownTime -= 0.1f;
-	
-	CooldownTimeChanged(RemainingCooldownTime);
-	
-	if (FMath::IsNearlyZero(RemainingCooldownTime, 0.01f))
-	{
-		CooldownEnd();
-	}
-}
-
-void UCooldownAbilityComponent::CooldownEnd()
+void UCooldownAbilityComponent::CooldownTimerEnd()
 {
 	SubAbilityState(AbilityState, EAbilityState::EAS_Cooldown);
 	AbilityStateChanged();
 	if (GetOwner()->GetWorldTimerManager().IsTimerActive(CooldownTimerHandle))
 	{
 		GetOwner()->GetWorldTimerManager().ClearTimer(CooldownTimerHandle);
+	}
+}
+
+void UCooldownAbilityComponent::CooldownTimerTick()
+{
+	CooldownCurrentTime -= 0.1f;
+	
+	CooldownTimeChanged(CooldownCurrentTime);
+	
+	if (FMath::IsNearlyZero(CooldownCurrentTime, 0.01f))
+	{
+		CooldownTimerEnd();
 	}
 }
 
@@ -76,6 +76,6 @@ void UCooldownAbilityComponent::CooldownReset()
 		bReset = true;
 		return;
 	}
-	CooldownEnd();
+	CooldownTimerEnd();
 }
 

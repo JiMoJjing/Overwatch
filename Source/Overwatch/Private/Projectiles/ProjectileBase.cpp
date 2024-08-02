@@ -1,6 +1,7 @@
 #include "Projectiles/ProjectileBase.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 #include "Utilities.h"
@@ -13,7 +14,8 @@ AProjectileBase::AProjectileBase() : HitSphereRadius(1.f)
 
 	HitSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("HitSphereComponent"));
 	SetRootComponent(HitSphereComponent);
-	
+
+	HitSphereComponent->CanCharacterStepUpOn = ECB_No;
 	HitSphereComponent->SetGenerateOverlapEvents(false);
 	HitSphereComponent->SetSphereRadius(1.f);
 
@@ -34,8 +36,9 @@ void AProjectileBase::BeginPlay()
 	}
 	
 	HitSphereComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnSphereHit);
-	HitSphereComponent->SetSphereRadius(HitSphereRadius);
 	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitSphereComponent->SetSphereRadius(HitSphereRadius);
+	HitSphereComponent->SetActive(false);
 
 	ProjectileMovementComponent->InitialSpeed = ProjectileInitialSpeed;
 	ProjectileMovementComponent->MaxSpeed = ProjectileMaxSpeed;
@@ -43,75 +46,12 @@ void AProjectileBase::BeginPlay()
 	ProjectileMovementComponent->SetActive(false);
 
 	NiagaraComponent->SetVisibility(false);
-	NiagaraComponent->Deactivate();
+	NiagaraComponent->SetActive(false);
 }
 
 void AProjectileBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Direction)
-{	
-	SetActorLocation(StartLocation);
-	SetActorRotation(Direction.Rotation());
-	
-	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
-	ProjectileMovementComponent->SetActive(true);
-	
-	NiagaraComponent->Activate(true);
-	NiagaraComponent->SetVisibility(true);
-	
-	if (LifeSpan != 0.0f)
-	{
-		GetWorldTimerManager().SetTimer(LifeSpanTimerHandle, this, &AProjectileBase::Deactivate, LifeSpan, false);
-	}
-}
-
-void AProjectileBase::Deactivate()
-{
-	if (GetWorldTimerManager().IsTimerActive(LifeSpanTimerHandle))
-	{
-		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
-	}
-	if(Cast<APawn>(GetOwner()) != GetInstigator())
-	{
-		SetInstigator(Cast<APawn>(GetOwner()));
-	}
-	SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
-	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	ProjectileMovementComponent->SetActive(false);
-	NiagaraComponent->SetVisibility(false);
-	NiagaraComponent->Deactivate();
-
-	if(ProjectileAmmoComponent.IsValid())
-	{
-		ProjectileAmmoComponent->DeactivateProjectile(this);
-	}
-}
-
-void AProjectileBase::OnHitSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	//Deactivate();
-}
-
-void AProjectileBase::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-{
-	Deactivate();
-}
-
-void AProjectileBase::Deflected(APawn* NewInstigator, const FVector& Direction)
-{
-	SetInstigator(NewInstigator);
-	SetActorRotation(Direction.Rotation());
-	
-	SetCollisionProfileByTeam(Cast<ACharacterBase>(NewInstigator)->GetTeamID());
-	
-	LifeSpanTimerRestart();
-	
-	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
 }
 
 void AProjectileBase::SetProjectileAmmoComponent(UProjectileAmmoComponent* InComponent)
@@ -122,16 +62,91 @@ void AProjectileBase::SetProjectileAmmoComponent(UProjectileAmmoComponent* InCom
 	}
 }
 
-void AProjectileBase::LifeSpanTimerRestart()
+void AProjectileBase::Activate(const FVector& StartLocation, const FVector& Direction)
+{
+	SetActorLocation(StartLocation);
+	SetActorRotation(Direction.Rotation());
+
+	HitSphereComponent->SetActive(true);
+	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	
+	NiagaraComponent->SetActive(true);
+	NiagaraComponent->SetVisibility(true);
+	
+	ProjectileMovementComponent->SetActive(true);
+	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
+	
+	LifeSpanTimerStart();
+}
+
+void AProjectileBase::Deactivate()
+{
+	SetActorLocation(FVector::ZeroVector);
+	LifeSpanTimerEnd();
+	
+	HitSphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitSphereComponent->SetActive(false);
+	
+	ProjectileMovementComponent->Velocity = FVector::ZeroVector;
+	ProjectileMovementComponent->SetActive(false);
+	
+	NiagaraComponent->SetVisibility(false);
+	NiagaraComponent->SetActive(false);
+	
+	if(Cast<APawn>(GetOwner()) != GetInstigator())
+	{
+		SetInstigator(Cast<APawn>(GetOwner()));
+	}
+	SetCollisionProfileByTeam(Cast<ACharacterBase>(GetOwner())->GetTeamID());
+
+	if(ProjectileAmmoComponent.IsValid())
+	{
+		ProjectileAmmoComponent->DeactivateProjectile(this);
+	}
+}
+
+
+void AProjectileBase::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	SpawnHitWallEffect(Hit.Location, FRotator::ZeroRotator);
+	Deactivate();
+}
+
+void AProjectileBase::LifeSpanTimerStart()
+{
+	if (LifeSpan != 0.0f)
+	{
+		GetWorldTimerManager().SetTimer(LifeSpanTimerHandle, this, &AProjectileBase::Deactivate, LifeSpan, false);
+	}
+}
+
+void AProjectileBase::LifeSpanTimerEnd()
 {
 	if (GetWorldTimerManager().IsTimerActive(LifeSpanTimerHandle))
 	{
 		GetWorldTimerManager().ClearTimer(LifeSpanTimerHandle);
 	}
-	
-	if (LifeSpan != 0.0f)
+}
+
+void AProjectileBase::LifeSpanTimerRestart()
+{
+	LifeSpanTimerEnd();
+	LifeSpanTimerStart();
+}
+
+void AProjectileBase::SpawnHitActorEffect(const FVector& SpawnLocation, const FRotator& SpawnRotation) const
+{
+	if(HitActorEffect)
 	{
-		GetWorldTimerManager().SetTimer(LifeSpanTimerHandle, this, &AProjectileBase::Deactivate, LifeSpan, false);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitActorEffect, SpawnLocation, SpawnRotation);
+	}
+}
+
+void AProjectileBase::SpawnHitWallEffect(const FVector& SpawnLocation, const FRotator& SpawnRotation) const
+{
+	if(HitWallEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitWallEffect, SpawnLocation, SpawnRotation);
 	}
 }
 
@@ -140,15 +155,25 @@ void AProjectileBase::SetCollisionProfileByTeam(ETeamID TeamID)
 	switch (TeamID)
 	{
 	case ETeamID::ETI_Team1:
-		HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
+		HitSphereComponent->SetCollisionProfileName(FName(TEXT("Team1ProjectileHit")));
 		break;
 	case ETeamID::ETI_Team2:
-		HitSphereCollisionProfileName = FName(TEXT("Team2ProjectileHit"));
+		HitSphereComponent->SetCollisionProfileName(FName(TEXT("Team2ProjectileHit")));
 		break;
 	default:
 		break;
 	}
+}
+
+void AProjectileBase::Deflected(APawn* NewInstigator, const FVector& Direction)
+{
+	SetActorRotation(Direction.Rotation());
+	ProjectileMovementComponent->Velocity = Direction * ProjectileInitialSpeed;
 	
-	HitSphereComponent->SetCollisionProfileName(HitSphereCollisionProfileName);
+	SetInstigator(NewInstigator);
+	if(ACharacterBase* CharacterBase = Cast<ACharacterBase>(GetInstigator()))
+	{
+		SetCollisionProfileByTeam(CharacterBase->GetTeamID());
+	}
 }
 

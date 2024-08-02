@@ -4,7 +4,6 @@
 #include "AmmoComponent.h"
 #include "ProjectileAmmoComponent.generated.h"
 
-
 class AProjectileBase;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -39,7 +38,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ammo_Projectile", meta = (AllowPrivateAccess = "true", ClampMin = "1", ClampMax = "1000"))
 	int32 PoolSize;
-
-	UPROPERTY()
-	TArray<AProjectileBase*> ProjectilePool;
+	
+	TQueue<AProjectileBase*> ProjectilePool;
 };

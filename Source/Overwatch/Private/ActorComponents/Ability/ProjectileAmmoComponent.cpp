@@ -33,10 +33,10 @@ void UProjectileAmmoComponent::ActivateProjectile(const FVector& StartLocation, 
 	}
 	else
 	{
-		if(AProjectileBase* ProjectileBase = ProjectilePool.Top())
+		AProjectileBase* ProjectileBase = nullptr;
+		if(ProjectilePool.Dequeue(ProjectileBase))
 		{
 			ProjectileBase->Activate(StartLocation, Direction);
-			ProjectilePool.Pop();
 		}
 	}
 }
@@ -45,7 +45,7 @@ void UProjectileAmmoComponent::DeactivateProjectile(AProjectileBase* ProjectileB
 {
 	if(ProjectileBase)
 	{
-		ProjectilePool.Push(ProjectileBase);
+		ProjectilePool.Enqueue(ProjectileBase);
 	}
 }
 
@@ -57,7 +57,7 @@ void UProjectileAmmoComponent::InitializePool()
 		SpawnParams.Owner = GetOwner();
 		SpawnParams.Instigator = Cast<APawn>(GetOwner());
 
-		FVector SpawnLocation = FVector::ZeroVector;
+		FVector SpawnLocation = FVector::ZeroVector + FVector(0.f, 0.f, -200.f);
 		FRotator SpawnRotation = FRotator::ZeroRotator;
 		
 		for (int i = 0; i < PoolSize; i++)
@@ -65,13 +65,13 @@ void UProjectileAmmoComponent::InitializePool()
 			if (AProjectileBase* ProjectileObject = GetWorld()->SpawnActor<AProjectileBase>(ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams))
 			{
 				ProjectileObject->SetProjectileAmmoComponent(this);
-				ProjectilePool.Add(ProjectileObject);
+				ProjectilePool.Enqueue(ProjectileObject);
 			}
 		}
 	}
 	else
 	{
-		CLog::Print("UProjectileAmmoComponent BeginPlay ProjectileClass nullptr");
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] ProjectileClass is nullptr"),*GetOwner()->GetName(), *GetName(), TEXT("InitializePool"));
 	}
 }
 

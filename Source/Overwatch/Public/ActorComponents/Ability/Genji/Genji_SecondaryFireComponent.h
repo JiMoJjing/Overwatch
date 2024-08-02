@@ -22,10 +22,10 @@ public:
 
 protected:
 	virtual void StartAbility() override;
-	virtual void CooldownEnd() override;
+	virtual void CooldownTimerEnd() override;
 
 private:
-	void SecondaryFire();
+	void PlayAbilityMontage();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Ability_Genji", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "45.0"))

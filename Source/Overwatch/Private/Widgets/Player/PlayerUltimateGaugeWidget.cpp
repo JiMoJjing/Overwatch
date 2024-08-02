@@ -16,10 +16,10 @@ void UPlayerUltimateGaugeWidget::NativeConstruct()
 
 	if(APlayerBase* PlayerBase = Cast<APlayerBase>(GetOwningPlayerPawn()))
 	{
-		if(PlayerBase->GetUltimateAbilityComponent())
+		if(UUltimateAbilityComponent* UltimateAbilityComponent = PlayerBase->GetUltimateAbilityComponent())
 		{
-			PlayerBase->GetUltimateAbilityComponent()->OnUltimateGaugeChanged.AddDynamic(this, &UPlayerUltimateGaugeWidget::OnUltimateGaugeChanged);
-			PlayerBase->GetUltimateAbilityComponent()->AddUltimateGauge(0.f);
+			UltimateAbilityComponent->OnUltimateGaugeChanged.AddDynamic(this, &UPlayerUltimateGaugeWidget::OnUltimateGaugeChanged);
+			UltimateAbilityComponent->AddUltimateGauge(0.f);
 		}
 	}
 	UltimateImage->SetVisibility(ESlateVisibility::Collapsed);

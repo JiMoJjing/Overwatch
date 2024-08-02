@@ -36,6 +36,8 @@ protected:
 	virtual void FinishAbility() override;
 
 private:
+	// 질풍참 몽타주 재생
+	void PlayAbilityMontage();
 	// 질풍참 시작 위치 설정
 	void SetSwiftStrikeStartLocation();
 	// 질풍참 도착 위치 설정
@@ -61,14 +63,18 @@ private:
 	UFUNCTION()
 	void SwiftStrikeCapsuleSizeTimelineFinished();
 
+	// Dragonblade 시작 시 질풍참 초기화 함수
+	UFUNCTION()
+	void DragonbladeActive();
+
 private:
 	UPROPERTY()
 	TObjectPtr<AGenji> GenjiRef;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	float SwiftStrikeDistance;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	float SwiftStrikeSpeed;
 
 	FVector SwiftStrikeStartLocation = FVector::ZeroVector;
@@ -77,10 +83,10 @@ private:
 
 	FVector SwiftStrikeHitNormalProjection = FVector::ZeroVector;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	float HitNormalProjectionInterpSpeed = 10.f;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCurveFloat> SwiftStrikeCapsuleSizeCurveFloat;
 
 	UPROPERTY()
@@ -92,15 +98,18 @@ private:
 	UPROPERTY()
 	FTimeline SwiftStrikeCapsuleSizeTimeline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	FVector2D CapsuleSize2D;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	FVector2D SwiftStrikeCapsuleSize2D;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ASwiftStrikeCollider> SwiftStrikeColliderClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_SwiftStrike", meta = (AllowPrivateAccess = "true"))
+	float SwiftStrikeDamage;
+	
 	UPROPERTY()
 	TObjectPtr<ASwiftStrikeCollider> SwiftStrikeCollider;
 	

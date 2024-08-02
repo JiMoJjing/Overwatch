@@ -5,13 +5,16 @@
 #include "Components/TimelineComponent.h"
 #include "Genji.generated.h"
 
-
+class AWeaponBase;
+class UGenji_DragonbladeComponent;
 class UProjectileAmmoComponent;
 class UGenji_PrimaryFireComponent;
 class UGenji_SecondaryFireComponent;
 class UGenji_SwiftStrikeComponent;
 class UGenji_DeflectComponent;
 class UAbilityComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDragonbladeActive);
 
 UCLASS()
 class OVERWATCH_API AGenji : public APlayerBase
@@ -26,6 +29,7 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	void SetDragonbladeActive(bool bActive);
 
 protected:
 	virtual void Jump() override;
@@ -53,6 +57,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UGenji_DeflectComponent* GetGenji_DeflectComponent() const;
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UGenji_DragonbladeComponent* GetGenji_DragonbladeComponent() const;
+
 protected:
 	virtual void AbilityOne() override;
 	virtual void AbilityTwo() override;
@@ -66,10 +73,25 @@ protected:
 	
 private:
 	void SecondJump();
+	void AttachDragonbladeTo(FName SocketName);
 
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnDragonbladeActive OnDragonbladeActive;
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilityComponent> DragonbladeSlashComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Genji_Weapon", meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeaponBase> DragonbladeClass;
+
+	UPROPERTY()
+	TObjectPtr<AWeaponBase> Weapon_Dragonblade;
+	
 	UPROPERTY()
 	uint32 JumpCount = 0;
 
+	UPROPERTY()
+	bool bDragonbladeActive = false;
 };

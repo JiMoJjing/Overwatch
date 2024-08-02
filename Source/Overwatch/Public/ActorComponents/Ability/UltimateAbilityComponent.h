@@ -22,29 +22,28 @@ public:
 
 	virtual void UseAbility() override;
 
-	void StartAutoAddUltimateGauge();
-
-	// 어차피 AddUltimateGauge에서 궁극기가 Active거나 이미 다 차있으면 얼리리턴하도록 되어있는데 필요한가?
-	void StopAutoAddUltimateGauge();
-
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE float GetUltimateGaugePercentage() const { return UltimateGaugePercentage; }
-	
 	UFUNCTION()
 	void AddUltimateGauge(float InAmount);
-	
-	UPROPERTY(BlueprintAssignable)
-	FOnUltimateGaugeChanged OnUltimateGaugeChanged;
 
 protected:
 	virtual void StartAbility() override;
+	virtual void FinishAbility() override;
 
 	void ResetGauge();
 	void AutoAddGauge();
-
-	void UltimateGaugeChanged (const float InUltimateGaugePercentage) const;
 	
-protected:
+	void StartAutoAddUltimateGauge();
+	void StopAutoAddUltimateGauge();
+
+	void UltimateGaugeChanged(const float InUltimateGaugePercentage) const;
+
+	void SetUltimateAbilityActive(bool bActive);
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnUltimateGaugeChanged OnUltimateGaugeChanged;
+	
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Ultimate", meta=(AllowPrivateAccess = "true"))
 	float MaxUltimateGauge = 2000.f;
 	
@@ -52,14 +51,14 @@ protected:
 	float UltimateGauge = 0.f;
 
 	UPROPERTY()
-	float UltimateGaugePercentage;
-	
-	UPROPERTY()
 	bool bUltimateAvailable = false;
 	
-	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "Ability_Ultimate", meta=(AllowPrivateAccess = "true"))
 	float AutoAddUltimateGaugeAmount = 5.f;
 
 	UPROPERTY()
 	FTimerHandle AutoAddUltimateGaugeTimerHandle;
+
+	UPROPERTY()
+	bool bUltimateAbilityActive = false;
 };

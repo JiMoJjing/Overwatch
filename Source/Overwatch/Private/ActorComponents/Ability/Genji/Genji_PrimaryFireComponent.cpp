@@ -1,8 +1,6 @@
 #include "ActorComponents/Ability/Genji/Genji_PrimaryFireComponent.h"
 #include "Characters/Player/Genji/Genji.h"
 #include "Characters/Player/PlayerBase.h"
-#include "ActorComponents/Pools/ProjectilePoolComponent.h"
-#include "ActorComponents/Ability/AbilityManagementComponent.h"
 #include "ActorComponents/Ability/AmmoComponent.h"
 #include "Utilities.h"
 #include "ActorComponents/Ability/ProjectileAmmoComponent.h"
@@ -18,7 +16,7 @@ void UGenji_PrimaryFireComponent::BeginPlay()
 	}
 	else
 	{
-		CLog::Log(TEXT("UGenji_PrimaryFire BeginPlay PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] Genji is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 }
 
@@ -26,17 +24,17 @@ void UGenji_PrimaryFireComponent::StartAbility()
 {
 	Super::StartAbility();
 
-	PrimaryFire();
-	CooldownStart();
+	PlayAbilityMontage();
+	CooldownTimerStart();
 }
 
-void UGenji_PrimaryFireComponent::CooldownEnd()
+void UGenji_PrimaryFireComponent::CooldownTimerEnd()
 {
-	Super::CooldownEnd();
+	Super::CooldownTimerEnd();
 	FinishAbility();
 }
 
-void UGenji_PrimaryFireComponent::PrimaryFire()
+void UGenji_PrimaryFireComponent::PlayAbilityMontage()
 {
 	if (AbilityManagementComponent == nullptr && ProjectileAmmoComponent == nullptr) return;
 	if (AbilityMontage == nullptr) return;
@@ -48,7 +46,7 @@ void UGenji_PrimaryFireComponent::PrimaryFire()
 	}
 	else
 	{
-		CLog::Log(TEXT("UGenji_PrimaryFireComponent UseAbility PrimaryFireMontage or PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] PlayerBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("PlayAbilityMontage"));
 	}
 }
 
@@ -63,5 +61,9 @@ void UGenji_PrimaryFireComponent::SingleShot()
 			ProjectileAmmoComponent->ActivateProjectile(StartLocation, Direction);
 			ProjectileAmmoComponent->ConsumeAmmo(1);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] PlayerBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("SingleShot"));
 	}
 }

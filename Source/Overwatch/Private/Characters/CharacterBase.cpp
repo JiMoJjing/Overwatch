@@ -86,7 +86,14 @@ void ACharacterBase::CharacterDeath()
 
 void ACharacterBase::CharacterRevive()
 {
-	HPComponent->CharacterRevive();
+	if(HPComponent)
+	{
+		HPComponent->CharacterRevive();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] HPComponent is nullptr"), *GetName(), TEXT("CharacterRevive"));
+	}
 	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 

@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "ProjectileBase.generated.h"
 
+class UNiagaraSystem;
 class UProjectileAmmoComponent;
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -24,28 +25,27 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Activate(const FVector& StartLocation, const FVector& Direction);
-
-	virtual void Deflected(APawn* NewInstigator, const FVector& Direction);
-
 	void SetProjectileAmmoComponent(UProjectileAmmoComponent* InComponent);
+	
+	virtual void Activate(const FVector& StartLocation, const FVector& Direction);
 	
 protected:
 	virtual void Deactivate();
 
 	UFUNCTION()
-	virtual void OnHitSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
 	virtual void OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	void LifeSpanTimerStart();
+	void LifeSpanTimerEnd();
 	void LifeSpanTimerRestart();
+	void SpawnHitActorEffect(const FVector& SpawnLocation, const FRotator& SpawnRotation) const;
+	void SpawnHitWallEffect(const FVector& SpawnLocation, const FRotator& SpawnRotation) const;
 	
-public:
 	virtual void SetCollisionProfileByTeam(ETeamID TeamID);
 
+	virtual void Deflected(APawn* NewInstigator, const FVector& Direction);
+
 protected:
-	// 벽 판정용 SphereComponent 인게임에서 여러 투사체들은 벽에대한 판정과 캐릭터에 대한 판정이 다르다.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> HitSphereComponent;
 	
@@ -54,32 +54,35 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
-	
-	// ProjectileSphereComponent's Radius
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "100.0"))
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "100.0"))
 	float HitSphereRadius;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "20000.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "20000.0"))
 	float ProjectileInitialSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "20000.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true", ClampMin = "1.0", ClampMax = "20000.0"))
 	float ProjectileMaxSpeed;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "3.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "3.0"))
 	float ProjectileGravityScale;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "10.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "10.0"))
 	float LifeSpan = 5.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true"))
 	float Damage = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraSystem> HitActorEffect;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ProjectileBase", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraSystem> HitWallEffect;
+	
+	
 	UPROPERTY()
 	FTimerHandle LifeSpanTimerHandle;
-
-	UPROPERTY()
-	FName HitSphereCollisionProfileName = FName(TEXT("Team1ProjectileHit"));
-
+	
 	UPROPERTY()
 	TWeakObjectPtr<UProjectileAmmoComponent> ProjectileAmmoComponent;
 };

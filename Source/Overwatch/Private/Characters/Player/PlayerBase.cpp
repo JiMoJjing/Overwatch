@@ -39,7 +39,7 @@ APlayerBase::APlayerBase()
 	GetCharacterMovement()->JumpZVelocity = 300.f;
 	GetCharacterMovement()->GravityScale = 0.75f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->MaxAcceleration = 2048.f;
@@ -72,6 +72,10 @@ void APlayerBase::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] PlayerController is nullptr"), *GetName(), TEXT("BeginPlay"));
 	}
 
 	MovementModeChangedDelegate.AddDynamic(this, &APlayerBase::MovementModeChanged);
@@ -177,8 +181,11 @@ void APlayerBase::NotifyCharacterDeath(AController* EventInstigator, AActor* Dam
 {
 	if(AOverwatchPlayerController* OverwatchPlayerController = Cast<AOverwatchPlayerController>(GetController()))
 	{
-		CLog::Print(TEXT("Death!"));
 		OverwatchPlayerController->ReceiveCharacterDeath(EventInstigator, DamageCauser, bIsHeadShot);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] OverwatchPlayerController is nullptr"), *GetName(), TEXT("NotifyCharacterDeath"));
 	}
 }
 
@@ -239,11 +246,6 @@ void APlayerBase::SecondaryFire()
 void APlayerBase::Reloading()
 {
 	CLog::Print(TEXT("Reloading Pressed"));
-	
-	if(AmmoComponent)
-	{
-		AmmoComponent->UseAbility();
-	}
 }
 
 void APlayerBase::QuickMelee()
@@ -256,6 +258,10 @@ void APlayerBase::ApplyDamageSuccess_Implementation(float Damage, bool bIsHeadSh
 	if(UltimateAbilityComponent)
 	{
 		UltimateAbilityComponent->AddUltimateGauge(Damage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] UltimateAbilityComponent is nullptr"), *GetName(), TEXT("ApplyDamageSuccess_Implementation"));
 	}
 	ApplyDamageSuccessEvent(bIsHeadShot);
 }
@@ -279,7 +285,7 @@ bool APlayerBase::TraceUnderCrosshair(const float TraceDistance, FHitResult& Out
 
 	if (PlayerController == nullptr) 
 	{
-		CLog::Log(TEXT("PlayerBase TraceUnderCrosshair PlayerController nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] PlayerController is nullptr"), *GetName(), TEXT("TraceUnderCrosshair"));
 		return false;
 	}
 
@@ -297,13 +303,15 @@ bool APlayerBase::TraceUnderCrosshair(const float TraceDistance, FHitResult& Out
 		}
 		else
 		{
-			CLog::Log(TEXT("PlayerBase TraceUnderCrosshair world nullptr"));
+			UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] GetWorld is nullptr"), *GetName(), TEXT("TraceUnderCrosshair"));
 		}
 
 		if (OutHitResult.bBlockingHit)
 		{
 			OutHitLocation = OutHitResult.Location;
+#if WITH_EDITOR
 			UKismetSystemLibrary::DrawDebugLine(this, GetActorLocation(), OutHitLocation, FLinearColor::Yellow, 5.f, 1.f);
+#endif
 			return true;
 		}
 		OutHitLocation = TraceEndLocation;
@@ -322,18 +330,14 @@ bool APlayerBase::GetDirectionToCrosshair(const FVector& StartLocation, FVector&
 	{
 		FVector Direction = HitResult.Location - StartLocation;
 		Direction.Normalize();
-
 		OutDirection = Direction;
-		
 		return true;
 	}
 	else
 	{
 		FVector Direction = HitLocation - StartLocation;
 		Direction.Normalize();
-
 		OutDirection = Direction;
-
 		return true;
 	}
 }

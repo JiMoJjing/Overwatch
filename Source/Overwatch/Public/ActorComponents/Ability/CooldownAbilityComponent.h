@@ -26,14 +26,12 @@ public:
 	void CooldownReset();
 	
 protected:
-	// Cooldown 시작
-	virtual void CooldownStart();
-	// bHasCooldownWidget이 true면 SetTimer에서 호출 될 함수 ( 0.1초 간격 )
-	virtual void CooldownTick();
-	// bHasCooldownWidget이 false면 SetTimer에서 호출 or CooldownTimerTick에서 NowCooldownTime이 0이되면 호출
-	virtual void CooldownEnd();
+	virtual void CooldownTimerStart();
+	virtual void CooldownTimerEnd();
+	// if 'OnCooldownTimeChanged.IsBound()' is true, this called every 0.1 second by SetTimer
+	virtual void CooldownTimerTick();
 
-	// CooldownWidget 사용 시 Delegate Broadcast 하는 함수 
+private:
 	void CooldownTimeChanged(const float InRemainingCooldownTime) const;
 
 public:
@@ -41,16 +39,13 @@ public:
 	FOnCooldownTimeChanged OnCooldownTimeChanged;
 
 protected:
-	// 쿨다운 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Cooldown", meta = (AllowPrivateAccess = "true"))
-	float CooldownTime;
+	float CooldownTime = 8.f;
 
-	// 쿨다운 TimerHandle
+	float CooldownCurrentTime = 0.f;
+
 	UPROPERTY()
 	FTimerHandle CooldownTimerHandle;
-
-	// 현재 쿨타임
-	float RemainingCooldownTime;
 
 	bool bReset = false;
 };

@@ -14,7 +14,7 @@
 
 
 UGenji_SwiftStrikeComponent::UGenji_SwiftStrikeComponent() :  SwiftStrikeDistance(1884.f), SwiftStrikeSpeed(5000.f),  CapsuleSize2D(42.f, 96.f)
-, SwiftStrikeCapsuleSize2D(21.f, 48.f), bSwiftStrike(false)
+, SwiftStrikeCapsuleSize2D(21.f, 48.f), SwiftStrikeDamage(50.f), bSwiftStrike(false)
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
@@ -52,10 +52,12 @@ void UGenji_SwiftStrikeComponent::BeginPlay()
 				SwiftStrikeCollider->AttachToActor(GenjiRef, TransformRules);
 			}
 		}
+		// 용검 시작 시 질풍참 쿨타임 초기화
+		GenjiRef->OnDragonbladeActive.AddDynamic(this, &UGenji_SwiftStrikeComponent::DragonbladeActive);
 	}
 	else
 	{
-		CLog::Log(TEXT("USwiftStrikeComponent BeginPlay PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] GenjiRef is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 
 	SwiftStrikeCapsuleSizeTimelineSettings();
@@ -72,23 +74,31 @@ void UGenji_SwiftStrikeComponent::StartAbility()
 {
 	Super::StartAbility();
 	
-	if (GenjiRef && AbilityMontage)
-	{
-		SwiftStrikeStartSetting();
-		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
-	}
+	PlayAbilityMontage();
 }
 
 void UGenji_SwiftStrikeComponent::FinishAbility()
 {
 	Super::FinishAbility();
 	SwiftStrikeFinishSetting();
-	CooldownStart();
+	CooldownTimerStart();
+}
+
+void UGenji_SwiftStrikeComponent::PlayAbilityMontage()
+{
+	if (GenjiRef && AbilityMontage)
+	{
+		SwiftStrikeStartSetting();
+		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Play(AbilityMontage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] GenjiRef or AbilityMontage is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("StartAbility"));
+	}
 }
 
 void UGenji_SwiftStrikeComponent::SetSwiftStrikeStartLocation()
 {
-	// SwiftStrikeStartLocation 설정
 	SwiftStrikeStartLocation = GenjiRef->GetActorLocation();
 }
 
@@ -113,9 +123,11 @@ void UGenji_SwiftStrikeComponent::SetSwiftStrikeEndLocation()
 		SwiftStrikeEndLocation = TraceEndLocation;
 	}
 
+#if WITH_EDITOR
 	// Draw Debug
 	DrawDebugSphere(GetWorld(), SwiftStrikeEndLocation, 10.f, 20, FColor::Green, false, 5.f, 0U, 1.f);
 	DrawDebugLine(GetWorld(), GenjiRef->GetActorLocation(), SwiftStrikeEndLocation, FColor::Green, false, 5.f, 0U, 1.f);
+#endif
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
@@ -154,6 +166,10 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeStartSetting()
 	if (SwiftStrikeCollider)
 	{
 		SwiftStrikeCollider->Activate();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] SwiftStrikeCollider is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BegiSwiftStrikeStartSettingnPlay"));
 	}
 }
 
@@ -198,6 +214,10 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeFinishSetting()
 	{
 		SwiftStrikeCollider->Deactivate();
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] SwiftStrikeCollider is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("SwiftStrikeFinishSetting"));
+	}
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
@@ -217,7 +237,7 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeUpdate(float DeltaTime)
 	SwiftStrikeHitNormalProjection = FMath::VInterpTo(SwiftStrikeHitNormalProjection, FVector::ZeroVector, DeltaTime, HitNormalProjectionInterpSpeed);
 
 	// 목표 위치에 도달하면 몽타주 종료
-	if (GenjiRef->GetActorLocation().Equals(SwiftStrikeEndLocation, 10.f))
+	if (GenjiRef->GetActorLocation().Equals(SwiftStrikeEndLocation, 20.f))
 	{
 		GenjiRef->GetMesh()->GetAnimInstance()->Montage_Stop(0.f, AbilityMontage);
 	}
@@ -255,7 +275,7 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineSettings()
 	}
 	else
 	{
-		CLog::Log(TEXT("USwiftStrikeComponent SwiftStrikeCapsuleSizeTimelineSettings SwiftStrikeCapsuleSizeCurveFloat nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] SwiftStrikeCapsuleSizeCurveFloat is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("SwiftStrikeCapsuleSizeTimelineSettings"));
 	}
 }
 
@@ -269,6 +289,11 @@ void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineUpdate(float Alp
 void UGenji_SwiftStrikeComponent::SwiftStrikeCapsuleSizeTimelineFinished()
 {
 	GenjiRef->GetCapsuleComponent()->SetCapsuleSize(CapsuleSize2D.X, CapsuleSize2D.Y);
+}
+
+void UGenji_SwiftStrikeComponent::DragonbladeActive()
+{
+	CooldownReset(); 
 }
 
 void UGenji_SwiftStrikeComponent::SwiftStrikeMontageFinished()

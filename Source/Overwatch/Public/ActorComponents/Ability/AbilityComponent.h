@@ -52,14 +52,12 @@ public:
 	virtual void UseAbility();
 	
 protected:
-	// 기술이 실행 가능한지 체크
-	bool CanUseAbility();
+	// Check if AbilityState to UseAbility
+	bool CanUseAbility() const;
 
-	// 현재 사용중인 기술을 캔슬할 수 있는지 체크
-	bool CanCancelAbility();
-
-
-	//기술이 시작될 때, 끝날 때 호출 되도록 구현할 것
+	// Check if this Ability can cancel current Ability
+	bool CanCancelCurrentAbility() const;
+	
 	virtual void StartAbility();
 	virtual void FinishAbility();
 
@@ -72,18 +70,17 @@ protected:
 	UFUNCTION()
 	virtual void OnOtherAbilityFinished(EAbilityType InAbilityType);
 
-	// FOnAbilityStateChanged 델리게이트 Broadcast 함수
-	void AbilityStateChanged() const;
-
 	// AbilityMontage 캔슬되면 호출 될 함수
 	UFUNCTION()
 	virtual void OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted);
-	
+
+	// FOnAbilityStateChanged 델리게이트 Broadcast 함수
+	void AbilityStateChanged() const;
+
 public:
 	UFUNCTION()
 	virtual void AbilityWidgetInit();
 
-	
 	UPROPERTY(BlueprintAssignable)
 	FOnAbilityStateChanged OnAbilityStateChanged;
 	

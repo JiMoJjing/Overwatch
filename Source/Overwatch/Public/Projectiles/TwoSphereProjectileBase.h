@@ -4,7 +4,6 @@
 #include "Projectiles/ProjectileBase.h"
 #include "TwoSphereProjectileBase.generated.h"
 
-
 UCLASS()
 class OVERWATCH_API ATwoSphereProjectileBase : public AProjectileBase
 {
@@ -19,25 +18,26 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Deflected(APawn* NewInstigator, const FVector& Direction) override;
+	virtual void Activate(const FVector& StartLocation, const FVector& Direction) override;
 
 protected:
-	UFUNCTION()
-	virtual void OnOverlapSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	virtual void SetCollisionProfileByTeam(ETeamID TeamID) override;
-
-	virtual void Activate(const FVector& StartLocation, const FVector& Direction) override;
 	virtual void Deactivate() override;
 	
+	UFUNCTION()
+	virtual void OnOverlapSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	virtual void SetCollisionProfileByTeam(ETeamID TeamID) override;
+
+	virtual void Deflected(APawn* NewInstigator, const FVector& Direction) override;
+	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile_OverlapSphere", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> OverlapSphereComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile_OverlapSphere", meta = (AllowPrivateAccess = "true"))
 	float OverlapSphereRadius = 10.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess));
-	TEnumAsByte<ETraceTypeQuery> TraceTypeQuery = TraceTypeQuery3;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Projectile_OverlapSphere", meta = (AllowPrivateAccess = "true"))
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 	
 };

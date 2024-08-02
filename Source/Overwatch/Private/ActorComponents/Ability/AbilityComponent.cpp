@@ -17,16 +17,21 @@ void UAbilityComponent::BeginPlay()
 	{
 		AbilityManagementComponent = PlayerBase->GetAbilityManagementComponent();
 		PlayerBase->GetMesh()->GetAnimInstance()->OnMontageBlendingOut.AddDynamic(this, &UAbilityComponent::OnMontageInterrupted);
+		//PlayerBase->GetMesh()->GetAnimInstance()->Montage_SetBlendingOutDelegate(FOnMontageBlendingOutStarted::CreateUObject(this, &UAbilityComponent::OnMontageInterrupted));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("AbilityComponent BeginPlay PlayerBase nullptr"));
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] : PlayerBase is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 
 	if (AbilityManagementComponent)
 	{
 		AbilityManagementComponent->OnAbilityStarted.AddDynamic(this, &UAbilityComponent::OnOtherAbilityStarted);
 		AbilityManagementComponent->OnAbilityFinished.AddDynamic(this, &UAbilityComponent::OnOtherAbilityFinished);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] : AbilityManagementComponent is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("BeginPlay"));
 	}
 
 	AddAbilityState(AbilityState, EAbilityState::EAS_Available);
@@ -47,17 +52,17 @@ void UAbilityComponent::UseAbility()
 	}
 }
 
-bool UAbilityComponent::CanUseAbility()
+bool UAbilityComponent::CanUseAbility() const
 {
 	bool bAvailable = IsAbilityState(AbilityState, EAbilityState::EAS_Available);
 	bAvailable &= IsNotAbilityState(AbilityState, EAbilityState::EAS_Active);
 	bAvailable &= IsNotAbilityState(AbilityState, EAbilityState::EAS_Cooldown);
-	bAvailable &= CanCancelAbility();
+	bAvailable &= CanCancelCurrentAbility();
 
 	return bAvailable;
 }
 
-bool UAbilityComponent::CanCancelAbility()
+bool UAbilityComponent::CanCancelCurrentAbility() const
 {
 	EAbilityType NowAbilityType = AbilityManagementComponent->GetActiveAbilityType();
 
@@ -70,6 +75,10 @@ void UAbilityComponent::StartAbility()
 	{
 		AbilityManagementComponent->NotifyAbilityStart(AbilityType);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] AbilityManagementComponent is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("StartAbility"));
+	}
 	AddAbilityState(AbilityState, EAbilityState::EAS_Active);
 	AbilityStateChanged();
 }
@@ -79,6 +88,10 @@ void UAbilityComponent::FinishAbility()
 	if (AbilityManagementComponent)
 	{
 		AbilityManagementComponent->NotifyAbilityFinish(AbilityType);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s -> %s] AbilityManagementComponent is nullptr"), *GetOwner()->GetName(), *GetName(), TEXT("FinishAbility"));
 	}
 	SubAbilityState(AbilityState, EAbilityState::EAS_Active);
 	AbilityStateChanged();
@@ -102,19 +115,19 @@ void UAbilityComponent::OnOtherAbilityFinished(EAbilityType InAbilityType)
 	}
 }
 
-void UAbilityComponent::AbilityStateChanged() const
-{
-	if(OnAbilityStateChanged.IsBound())
-	{
-		OnAbilityStateChanged.Broadcast(AbilityState);
-	}
-}
-
 void UAbilityComponent::OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted)
 {
 	if(AbilityMontage == Montage && bInterrupted)
 	{
 		FinishAbility();
+	}
+}
+
+void UAbilityComponent::AbilityStateChanged() const
+{
+	if(OnAbilityStateChanged.IsBound())
+	{
+		OnAbilityStateChanged.Broadcast(AbilityState);
 	}
 }
 

@@ -21,16 +21,17 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 protected:
-	virtual void DurationStart();
-	virtual void DurationTick();
-	virtual void DurationEnd();
+	virtual void DurationTimerStart();
+	virtual void DurationTimerTick();
+	virtual void DurationTimerEnd();
 
 	void DurationTimeChanged(const float InRemainingDurationTime) const;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Duration", meta = (AllowPrivateAccess = "true"))
-	float DurationTime;
+	float DurationTime = 0.f;
 
-	float RemainingDurationTime;
+	float RemainingDurationTime = 0.f;
 	
 	UPROPERTY()
 	FTimerHandle DurationTimerHandle;

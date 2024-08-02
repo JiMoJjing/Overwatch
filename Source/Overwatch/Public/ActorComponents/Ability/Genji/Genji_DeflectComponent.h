@@ -19,15 +19,18 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
+	void PlayAbilityMontage();
+	
 protected:
 	virtual void UseAbility() override;
 	virtual void StartAbility() override;
 	virtual void FinishAbility() override;
-
-	virtual void DurationEnd() override;
+	virtual void OnOtherAbilityStarted(EAbilityType InAbilityType) override;
+	virtual void OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted) override;
 	
+	virtual void DurationTimerEnd() override;
+
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability_Genji", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ADeflectCollider> DeflectColliderClass;
@@ -37,4 +40,7 @@ private:
 
 	UPROPERTY()
 	FTimerHandle DeflectTimerHandle;
+
+	UPROPERTY()
+	uint8 DeflectMontageSectionCount = 0;
 };

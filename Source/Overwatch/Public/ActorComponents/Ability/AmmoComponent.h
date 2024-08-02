@@ -42,9 +42,11 @@ public:
 protected:
 	virtual void StartAbility() override;
 	virtual void FinishAbility() override;
+	
 	virtual void OnOtherAbilityFinished(EAbilityType InAbilityType) override;
 
-	virtual void PlayReloadingMontage();
+	void PlayAbilityMontage();
+	void StopAbilityMontage();
 	virtual void OnMontageInterrupted(UAnimMontage* Montage, bool bInterrupted) override;
 
 	void AmmoChanged() const;

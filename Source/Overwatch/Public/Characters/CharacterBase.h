@@ -47,7 +47,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UHPComponent> HPComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CharacterBase", meta=(AllowPrivateAccess = "true"))
 	ETeamID TeamID = ETeamID::ETI_Team1;
 	
 };

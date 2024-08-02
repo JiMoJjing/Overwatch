@@ -15,7 +15,7 @@ ATrainingBot::ATrainingBot()
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 	GetMesh()->SetRelativeScale3D(FVector(0.6f, 0.6f, 0.6f));
 	
-	ProjectileAmmoComponent = CreateDefaultSubobject<UProjectileAmmoComponent>(TEXT("ProjectilePoolComponent"));
+	ProjectileAmmoComponent = CreateDefaultSubobject<UProjectileAmmoComponent>(TEXT("ProjectileAmmoComponent"));
 }
 
 void ATrainingBot::BeginPlay()
@@ -36,6 +36,10 @@ void ATrainingBot::Fire()
 	{
 		ProjectileAmmoComponent->ActivateProjectile(GetMesh()->GetBoneLocation(FName(TEXT("head"))) + FVector(20.f, 0.f, 0.f), GetActorForwardVector());
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[%s -> %s] ProjectileAmmoComponent is nullptr"), *GetName(), TEXT("InitializePool"));
+	}
 }
 
 void ATrainingBot::CharacterDeath()
@@ -54,7 +58,7 @@ void ATrainingBot::StartFire()
 {
 	if(bFireMode)
 	{
-		GetWorldTimerManager().SetTimer(AutoFireTimerHandle, this, &ATrainingBot::Fire, 1.f, true, 2.f);
+		GetWorldTimerManager().SetTimer(AutoFireTimerHandle, this, &ATrainingBot::Fire, 0.25f, true, 2.f);
 	}
 }
 

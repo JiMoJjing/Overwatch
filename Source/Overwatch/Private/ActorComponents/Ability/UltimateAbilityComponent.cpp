@@ -6,8 +6,6 @@
 UUltimateAbilityComponent::UUltimateAbilityComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
-	UltimateGaugePercentage = (UltimateGauge / MaxUltimateGauge) * 100.f;
 }
 
 void UUltimateAbilityComponent::BeginPlay()
@@ -24,7 +22,7 @@ void UUltimateAbilityComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UUltimateAbilityComponent::UseAbility()
 {
-	if(bUltimateAvailable)
+	if(bUltimateAvailable && CanUseAbility())
 	{
 		StartAbility();
 		bUltimateAvailable = false;
@@ -34,14 +32,22 @@ void UUltimateAbilityComponent::UseAbility()
 void UUltimateAbilityComponent::StartAbility()
 {
 	Super::StartAbility();
-	ResetGauge();
+}
+
+void UUltimateAbilityComponent::FinishAbility()
+{
+	Super::FinishAbility();
 }
 
 void UUltimateAbilityComponent::ResetGauge()
 {
 	UltimateGauge = 0.f;
 	UltimateGaugeChanged(0.f);
-	Super::FinishAbility();
+}
+
+void UUltimateAbilityComponent::AutoAddGauge()
+{
+	AddUltimateGauge(AutoAddUltimateGaugeAmount);
 }
 
 void UUltimateAbilityComponent::StartAutoAddUltimateGauge()
@@ -60,11 +66,6 @@ void UUltimateAbilityComponent::StopAutoAddUltimateGauge()
 	}
 }
 
-void UUltimateAbilityComponent::AutoAddGauge()
-{
-	AddUltimateGauge(AutoAddUltimateGaugeAmount);
-}
-
 void UUltimateAbilityComponent::UltimateGaugeChanged(const float InUltimateGaugePercentage) const
 {
 	if(OnUltimateGaugeChanged.IsBound())
@@ -73,9 +74,15 @@ void UUltimateAbilityComponent::UltimateGaugeChanged(const float InUltimateGauge
 	}
 }
 
+void UUltimateAbilityComponent::SetUltimateAbilityActive(bool bActive)
+{
+	bUltimateAbilityActive = bActive;
+}
+
 void UUltimateAbilityComponent::AddUltimateGauge(float InAmount)
 {
-	if(IsAbilityState(AbilityState, EAbilityState::EAS_Active)) return;
+	//if(IsAbilityState(AbilityState, EAbilityState::EAS_Active)) return;
+	if(bUltimateAbilityActive) return;
 	if(bUltimateAvailable) return;
 	
 	if(UltimateGauge + InAmount >= MaxUltimateGauge)
@@ -88,9 +95,5 @@ void UUltimateAbilityComponent::AddUltimateGauge(float InAmount)
 		UltimateGauge += InAmount;
 	}
 
-	UltimateGaugePercentage = UltimateGauge / MaxUltimateGauge;
-
-	UltimateGaugeChanged(UltimateGaugePercentage);
+	UltimateGaugeChanged(UltimateGauge / MaxUltimateGauge);
 }
-
-
